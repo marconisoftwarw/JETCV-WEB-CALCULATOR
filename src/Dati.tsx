@@ -79,7 +79,7 @@ const SERVIZI_RICORRENTI: ServizioRow[] = [
   },
   {
     id: crypto.randomUUID(),
-    servizio: "Superbase",
+    servizio: "Supabase",
     costo1000: 30,
     costo10000: 30,
     costo100000: 30,
@@ -178,7 +178,7 @@ export default function DashboardServizi() {
   const calcolaCostoVerify = (numeroUtenti: number) => {
     // Formula: (49 + (numero totale di utenti certificatori * 0.80)) / 12
     const utentiCertificatori = (numeroUtenti * percentualeCertificatori) / 100;
-    return (49 + utentiCertificatori * 0.8) / 12;
+    return 49 + (utentiCertificatori * 0.8) / 12;
   };
 
   // Funzione per calcolare il costo di Crossmint
@@ -552,12 +552,12 @@ export default function DashboardServizi() {
         {/* Header */}
         <div className="header">
           <div className="header-content">
-          <div>
+            <div>
               <h1 className="header-title">JECT Cost Calculator</h1>
               <p className="header-subtitle">
                 Analizza costi con scenari personalizzabili
               </p>
-          </div>
+            </div>
             <div className="header-actions">
               <button
                 onClick={() => setShowScenarioForm(true)}
@@ -591,7 +591,7 @@ export default function DashboardServizi() {
 
               <div className="form-group">
                 <label className="form-label">Nome Scenario</label>
-              <input
+                <input
                   type="text"
                   value={nuovoScenario.nome}
                   onChange={(e) =>
@@ -732,6 +732,42 @@ export default function DashboardServizi() {
               <div className="crossmint-controls">
                 <h3 className="crossmint-title">⚙️ Parametri Dinamici</h3>
 
+                {/* Warning AWS */}
+                <div
+                  style={{
+                    background: "rgba(245, 158, 11, 0.1)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    borderRadius: "var(--border-radius)",
+                    padding: "0.75rem",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      fontSize: "0.875rem",
+                      color: "var(--warning-color)",
+                      fontWeight: "600",
+                    }}
+                  >
+                    ⚠️ <strong>Nota importante AWS EC2:</strong>
+                  </div>
+                  <p
+                    style={{
+                      margin: "0.25rem 0 0 0",
+                      fontSize: "0.8rem",
+                      color: "var(--gray-700)",
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    Il costo AWS raddoppia per 100K utenti (da €15 a €30/mese).
+                    Considera soluzioni di ottimizzazione come auto-scaling,
+                    istanze reserved o architetture serverless.
+                  </p>
+                </div>
+
                 <div className="crossmint-inputs">
                   <div className="crossmint-input-group">
                     <label className="crossmint-label">
@@ -740,7 +776,7 @@ export default function DashboardServizi() {
                     <input
                       type="number"
                       value={percentualeUtentiAttivi}
-                onChange={(e) => {
+                      onChange={(e) => {
                         const value = Number(e.target.value);
                         if (value >= 0 && value <= 100) {
                           setPercentualeUtentiAttivi(value);
@@ -754,9 +790,7 @@ export default function DashboardServizi() {
                     />
                   </div>
                   <div className="crossmint-input-group">
-                    <label className="crossmint-label">
-                      Numero Update
-            </label>
+                    <label className="crossmint-label">Numero Update</label>
                     <input
                       type="number"
                       value={numeroUpdateMint}
@@ -862,8 +896,8 @@ export default function DashboardServizi() {
                       </div>
                     </div>
                   </div>
-          </div>
-        </div>
+                </div>
+              </div>
 
               <div className="table-container">
                 <table className="data-table">
@@ -961,21 +995,21 @@ export default function DashboardServizi() {
                                   ? servizio.costo100000
                                   : Number(servizio[colonnaKey]) || 0;
 
-                                                     // Applica la formula speciale per Crossmint
-                           if (servizio.servizio === "Crossmint") {
-                             valore = calcolaCostoCrossmint(scenario.utenti);
-                           }
-                           // Applica la formula speciale per Verify(KYC)
-                           if (servizio.servizio === "Verify(KYC)") {
-                             valore = calcolaCostoVerify(scenario.utenti);
-                           }
-                           // App Store e Play Store hanno costi fissi
-                           if (servizio.servizio === "App Store") {
-                             valore = 8.25; // 99€/anno = 8.25€/mese
-                           }
-                           if (servizio.servizio === "Play Store") {
-                             valore = 2.08; // 25€ una tantum ammortizzato
-                           }
+                          // Applica la formula speciale per Crossmint
+                          if (servizio.servizio === "Crossmint") {
+                            valore = calcolaCostoCrossmint(scenario.utenti);
+                          }
+                          // Applica la formula speciale per Verify(KYC)
+                          if (servizio.servizio === "Verify(KYC)") {
+                            valore = calcolaCostoVerify(scenario.utenti);
+                          }
+                          // App Store e Play Store hanno costi fissi
+                          if (servizio.servizio === "App Store") {
+                            valore = 8.25; // 99€/anno = 8.25€/mese
+                          }
+                          if (servizio.servizio === "Play Store") {
+                            valore = 2.08; // 25€ una tantum ammortizzato
+                          }
 
                           const badgeClass =
                             index === 0
@@ -984,15 +1018,15 @@ export default function DashboardServizi() {
                                 ? "cost-badge-success"
                                 : "cost-badge-warning";
 
-                      return (
+                          return (
                             <td
                               key={scenario.id}
                               style={{ textAlign: "center" }}
                             >
-                                                             {servizio.servizio === "Crossmint" ||
-                               servizio.servizio === "Verify(KYC)" ||
-                               servizio.servizio === "App Store" ||
-                               servizio.servizio === "Play Store" ? (
+                              {servizio.servizio === "Crossmint" ||
+                              servizio.servizio === "Verify(KYC)" ||
+                              servizio.servizio === "App Store" ||
+                              servizio.servizio === "Play Store" ? (
                                 <span
                                   className={`cost-badge ${badgeClass}`}
                                   style={{
@@ -1001,11 +1035,12 @@ export default function DashboardServizi() {
                                     borderColor: scenario.colore + "40",
                                     cursor: "default",
                                   }}
-                                                                     title={
-                                     servizio.servizio === "Crossmint" || servizio.servizio === "Verify(KYC)" 
-                                       ? "Calcolato automaticamente con formula personalizzata"
-                                       : "Costo fisso per tutti gli scenari"
-                                   }
+                                  title={
+                                    servizio.servizio === "Crossmint" ||
+                                    servizio.servizio === "Verify(KYC)"
+                                      ? "Calcolato automaticamente con formula personalizzata"
+                                      : "Costo fisso per tutti gli scenari"
+                                  }
                                 >
                                   €{valore.toFixed(2)}
                                 </span>
@@ -1057,9 +1092,30 @@ export default function DashboardServizi() {
                                     backgroundColor: scenario.colore + "20",
                                     color: scenario.colore,
                                     borderColor: scenario.colore + "40",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
                                   }}
+                                  title={
+                                    servizio.servizio === "AWS EC2" &&
+                                    scenario.utenti === 100000
+                                      ? "⚠️ ATTENZIONE: Costo raddoppia per 100K utenti - Considera ottimizzazioni"
+                                      : undefined
+                                  }
                                 >
                                   €{valore.toLocaleString()}
+                                  {servizio.servizio === "AWS EC2" &&
+                                    scenario.utenti === 100000 && (
+                                      <span
+                                        style={{
+                                          fontSize: "0.75rem",
+                                          color: "var(--warning-color)",
+                                          fontWeight: "bold",
+                                        }}
+                                      >
+                                        ⚠️
+                                      </span>
+                                    )}
                                 </span>
                               )}
                             </td>
@@ -1275,9 +1331,9 @@ export default function DashboardServizi() {
                           </div>
                         )}
                       </div>
-                      );
-                    })}
-              </div>
+                    );
+                  })}
+                </div>
 
                 {/* Riepilogo Comparativo */}
                 <div
@@ -1340,7 +1396,7 @@ export default function DashboardServizi() {
                           (s) => totaliScenari[s.id]?.annuale || 0,
                         ),
                       ).toLocaleString()}
-                  </div>
+                    </div>
 
                     <div>
                       <strong>Scenario più costoso:</strong>
@@ -1359,7 +1415,7 @@ export default function DashboardServizi() {
                           (s) => totaliScenari[s.id]?.annuale || 0,
                         ),
                       ).toLocaleString()}
-                  </div>
+                    </div>
 
                     <div>
                       <strong>Differenza massima:</strong>
@@ -1377,7 +1433,7 @@ export default function DashboardServizi() {
                         )
                       ).toLocaleString()}{" "}
                       annui
-                </div>
+                    </div>
 
                     <div>
                       <strong>Media annuale:</strong>
@@ -1391,8 +1447,8 @@ export default function DashboardServizi() {
                     </div>
                   </div>
                 </div>
-          </div>
-        </div>
+              </div>
+            </div>
 
             {/* Grafici Dinamici */}
             <div className="charts-section">
@@ -1444,7 +1500,7 @@ export default function DashboardServizi() {
             <div className="strategy-header">
               <div className="strategy-icon">
                 <TrendingUp size={24} />
-                </div>
+              </div>
               <div>
                 <h2 className="strategy-title">
                   🎯 Strategia Business Planning
@@ -1521,20 +1577,45 @@ export default function DashboardServizi() {
                 </div>
                 <div className="phase-content">
                   <div className="phase-grid">
-                    <div className="phase-card">
-                      <h4>🔴 Priorità Alta - Servizi Costosi</h4>
-                      {serviziRicorrenti
-                        .filter((s) => s.costo100000 > 50)
-                        .sort((a, b) => b.costo100000 - a.costo100000)
-                        .slice(0, 3)
-                        .map((servizio) => (
-                          <div key={servizio.id} className="priority-item high">
-                            <strong>{servizio.servizio}</strong>
-                            <span>€{servizio.costo100000}/mese</span>
-                            <small>Negozia contratti volume</small>
-                          </div>
-                        ))}
-                    </div>
+                                         <div className="phase-card">
+                       <h4>🔴 Priorità Alta - Servizi Costosi</h4>
+                       {serviziRicorrenti
+                         .filter((s) => s.costo100000 > 50)
+                         .sort((a, b) => b.costo100000 - a.costo100000)
+                         .slice(0, 3)
+                         .map((servizio) => (
+                           <div key={servizio.id} className="priority-item high">
+                             <strong>{servizio.servizio}</strong>
+                             <span>€{servizio.costo100000}/mese</span>
+                             <small>Negozia contratti volume</small>
+                           </div>
+                         ))}
+                       
+                       {/* Warning specifico per AWS */}
+                       <div style={{
+                         background: 'rgba(245, 158, 11, 0.1)',
+                         border: '1px solid rgba(245, 158, 11, 0.3)',
+                         borderRadius: 'var(--border-radius)',
+                         padding: '0.75rem',
+                         marginTop: '1rem'
+                       }}>
+                         <div style={{ 
+                           display: 'flex', 
+                           alignItems: 'center', 
+                           gap: '0.5rem',
+                           fontSize: '0.8rem',
+                           color: 'var(--warning-color)',
+                           fontWeight: '600',
+                           marginBottom: '0.25rem'
+                         }}>
+                           ⚠️ AWS EC2 - Scalabilità Critica
+                         </div>
+                         <div style={{ fontSize: '0.75rem', color: 'var(--gray-700)' }}>
+                           Crescita: +100% (€15→€30) per 100K utenti<br/>
+                           <strong>Azioni:</strong> Auto-scaling, Reserved Instances, Container optimization
+                         </div>
+                       </div>
+                     </div>
                     <div className="phase-card">
                       <h4>🟡 Priorità Media - Crescita Variabile</h4>
                       {serviziRicorrenti
@@ -1561,7 +1642,7 @@ export default function DashboardServizi() {
                             <small>Ottimizza utilizzo</small>
                           </div>
                         ))}
-                </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1644,7 +1725,7 @@ export default function DashboardServizi() {
                         ).toLocaleString()}
                       </p>
                       <small>Prepara contratti scalabili</small>
-              </div>
+                    </div>
                     <div className="risk-card medium-risk">
                       <h4>🟡 Medio Rischio</h4>
                       <p>
@@ -1652,7 +1733,7 @@ export default function DashboardServizi() {
                       </p>
                       <p>Ottimizzazione: -30% costi</p>
                       <small>Rivedi servizi non essenziali</small>
-              </div>
+                    </div>
                     <div className="risk-card low-risk">
                       <h4>🟢 Basso Rischio</h4>
                       <p>
@@ -1660,8 +1741,8 @@ export default function DashboardServizi() {
                       </p>
                       <p>Scenario attuale mantieni</p>
                       <small>Monitoraggio standard</small>
-              </div>
-            </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1729,9 +1810,9 @@ export default function DashboardServizi() {
                                     : "🔴 Critico"}
                               </div>
                             </div>
-      </div>
-    </div>
-  );
+                          </div>
+                        </div>
+                      );
                     })}
                   </div>
                 </div>

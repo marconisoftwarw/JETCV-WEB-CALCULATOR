@@ -655,12 +655,26 @@ body {
 }
 
 /* Responsive Design */
+@media (min-width: 1400px) {
+  .content {
+    max-width: 1400px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  
+  .charts-section {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+
 @media (max-width: 1024px) {
   .main-layout {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-
+  
   .charts-section {
     display: grid;
     grid-template-columns: 1fr;
@@ -674,42 +688,75 @@ body {
     align-items: flex-start;
     gap: 1rem;
   }
-
+  
   .header-title {
     font-size: 1.75rem;
   }
-
+  
   .content {
     padding: 1rem;
   }
-
+  
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-
+  
   .stat-value {
     font-size: 1.5rem;
   }
-
+  
   .table-section {
     border-radius: var(--border-radius-lg);
+    overflow-x: auto;
   }
-
+  
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius);
+  }
+  
+  .data-table {
+    min-width: 600px;
+    font-size: 0.8rem;
+  }
+  
   .data-table th,
   .data-table td {
     padding: 0.75rem 0.5rem;
+    white-space: nowrap;
   }
-
+  
+  .data-table th {
+    font-size: 0.7rem;
+  }
+  
   .cost-badge {
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
+    min-width: fit-content;
   }
-
+  
+  .edit-input {
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+  
+  .edit-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  
   .chart-body {
     height: 250px;
   }
-
+  
+  .main-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
   .footer {
     flex-direction: column;
     align-items: flex-start;
@@ -717,14 +764,89 @@ body {
 }
 
 @media (max-width: 480px) {
+  .header-content {
+    padding: 1rem 0.75rem;
+  }
+
+  .header-title {
+    font-size: 1.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.9rem;
+  }
+
   .header-actions {
     width: 100%;
     justify-content: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
-
+  
   .btn {
     flex: 1;
     justify-content: center;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .btn-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .content {
+    padding: 0.75rem;
+  }
+
+  .stats-grid {
+    gap: 0.75rem;
+  }
+
+  .stat-card-content {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .table-section {
+    border-radius: var(--border-radius);
+  }
+
+  .table-header {
+    padding: 1rem;
+  }
+
+  .table-title {
+    font-size: 1.25rem;
+  }
+
+  .table-description {
+    font-size: 0.9rem;
+  }
+
+  .data-table {
+    min-width: 500px;
+    font-size: 0.75rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem 0.375rem;
+  }
+
+  .data-table th {
+    font-size: 0.65rem;
+  }
+
+  .cost-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    flex-direction: column;
+    gap: 0.125rem;
   }
 
   .edit-form {
@@ -732,9 +854,39 @@ body {
     align-items: stretch;
     gap: 0.5rem;
   }
-
+  
   .edit-actions {
     align-self: center;
+  }
+
+  .edit-input {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .edit-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .chart-body {
+    height: 200px;
+  }
+
+  .charts-section {
+    gap: 0.75rem;
+  }
+
+  .chart-header {
+    padding: 0.75rem;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+
+  .chart-subtitle {
+    font-size: 0.8rem;
   }
 }
 
@@ -1088,35 +1240,65 @@ body {
     padding: 1.5rem;
     margin: 1rem;
   }
-
+  
   .form-actions {
     flex-direction: column;
   }
-
+  
   .btn {
     width: 100%;
     justify-content: center;
   }
-
+  
   .color-picker {
     justify-content: center;
   }
-
+  
   .header-actions {
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
   }
-
+  
   .annual-totals-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
-
+  
+  .annual-card {
+    padding: 1rem;
+  }
+  
   .annual-value {
     font-size: 1.5rem;
   }
-
+  
+  .annual-breakdown {
+    font-size: 0.8rem;
+  }
+  
+  .annual-users {
+    font-size: 0.75rem;
+  }
+  
+  .percentage-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .comparison-summary {
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  
   .comparison-grid {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .comparison-header {
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -1141,6 +1323,23 @@ body {
   }
 }
 
+/* Mobile Utilities */
+@media (max-width: 768px) {
+  .mobile-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .mobile-no-wrap {
+    white-space: nowrap;
+  }
+  
+  .mobile-wrap {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
 /* Print Styles */
 @media print {
   .header-actions,
@@ -1149,17 +1348,25 @@ body {
   .scenario-remove-btn {
     display: none !important;
   }
-
+  
   .app-container {
     background: white !important;
   }
-
+  
   .chart-body {
     height: auto !important;
   }
-
+  
   .modal-overlay {
     display: none !important;
+  }
+  
+  .business-strategy-section {
+    page-break-before: always;
+  }
+  
+  .strategy-phase {
+    page-break-inside: avoid;
   }
 }
 
@@ -1743,13 +1950,47 @@ body {
 }
 
 /* Business Strategy Responsive */
+@media (max-width: 1024px) {
+  .business-strategy-section {
+    padding: 1.5rem;
+  }
+  
+  .phase-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .timeline-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  
+  .risk-matrix {
+    grid-template-columns: 1fr;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .business-strategy-section {
     padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .strategy-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 
   .strategy-title {
     font-size: 1.5rem;
+  }
+
+  .strategy-subtitle {
+    font-size: 0.9rem;
   }
 
   .phase-grid {
@@ -1760,16 +2001,32 @@ body {
     margin-left: 0;
   }
 
+  .phase-header {
+    margin-bottom: 1rem;
+  }
+
   .timeline-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .timeline-metric {
+    padding: 0.5rem;
   }
 
   .risk-matrix {
     grid-template-columns: 1fr;
   }
 
+  .risk-card {
+    padding: 1rem;
+  }
+
   .kpi-grid {
     grid-template-columns: 1fr;
+  }
+
+  .kpi-card {
+    padding: 1rem;
   }
 
   .decision-grid {
@@ -1779,11 +2036,13 @@ body {
   .action-item {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
   }
 
   .action-period {
     min-width: auto;
     align-self: flex-start;
+    padding: 0.5rem 1rem;
   }
 
   .phase-number {
@@ -1794,6 +2053,98 @@ body {
 
   .timeline-item {
     padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .timeline-marker {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .business-strategy-section {
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+  }
+
+  .strategy-title {
+    font-size: 1.3rem;
+  }
+
+  .strategy-icon {
+    padding: 0.5rem;
+  }
+
+  .strategy-phases {
+    gap: 1.5rem;
+  }
+
+  .strategy-phase {
+    padding: 1rem;
+  }
+
+  .phase-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .phase-number {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.9rem;
+  }
+
+  .phase-title {
+    font-size: 1.1rem;
+  }
+
+  .phase-card {
+    padding: 1rem;
+  }
+
+  .phase-card h4 {
+    font-size: 1rem;
+  }
+
+  .timeline-item {
+    padding: 0.75rem;
+  }
+
+  .timeline-content h4 {
+    font-size: 1rem;
+  }
+
+  .risk-card {
+    padding: 0.75rem;
+  }
+
+  .kpi-card {
+    padding: 1rem;
+  }
+
+  .kpi-card h4 {
+    font-size: 1rem;
+  }
+
+  .decision-framework {
+    padding: 1rem;
+  }
+
+  .decision-card {
+    padding: 1rem;
+  }
+
+  .action-period {
+    font-size: 0.8rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .action-task {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -1909,22 +2260,89 @@ body {
 }
 
 /* Crossmint Responsive */
+@media (max-width: 1024px) {
+  .crossmint-inputs {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .crossmint-preview div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   .crossmint-inputs {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-
+  
   .crossmint-controls {
     padding: 1rem;
+    margin-bottom: 0.75rem;
   }
-
+  
+  .crossmint-title {
+    font-size: 1rem;
+  }
+  
+  .crossmint-description {
+    font-size: 0.8rem;
+    padding: 0.375rem;
+  }
+  
+  .crossmint-preview {
+    padding: 0.75rem;
+  }
+  
+  .crossmint-preview-title {
+    font-size: 0.8rem;
+  }
+  
   .crossmint-preview-values {
     gap: 0.25rem;
   }
-
+  
   .crossmint-preview-values span {
     padding: 0.375rem;
     font-size: 0.8125rem;
+  }
+  
+  .crossmint-preview div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .crossmint-controls {
+    padding: 0.75rem;
+  }
+  
+  .crossmint-title {
+    font-size: 0.95rem;
+  }
+  
+  .crossmint-input-group {
+    gap: 0.375rem;
+  }
+  
+  .crossmint-label {
+    font-size: 0.8rem;
+  }
+  
+  .crossmint-input {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .crossmint-preview {
+    padding: 0.5rem;
+  }
+  
+  .crossmint-preview-title {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 }
