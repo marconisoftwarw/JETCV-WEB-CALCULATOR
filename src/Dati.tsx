@@ -1577,45 +1577,56 @@ export default function DashboardServizi() {
                 </div>
                 <div className="phase-content">
                   <div className="phase-grid">
-                                         <div className="phase-card">
-                       <h4>🔴 Priorità Alta - Servizi Costosi</h4>
-                       {serviziRicorrenti
-                         .filter((s) => s.costo100000 > 50)
-                         .sort((a, b) => b.costo100000 - a.costo100000)
-                         .slice(0, 3)
-                         .map((servizio) => (
-                           <div key={servizio.id} className="priority-item high">
-                             <strong>{servizio.servizio}</strong>
-                             <span>€{servizio.costo100000}/mese</span>
-                             <small>Negozia contratti volume</small>
-                           </div>
-                         ))}
-                       
-                       {/* Warning specifico per AWS */}
-                       <div style={{
-                         background: 'rgba(245, 158, 11, 0.1)',
-                         border: '1px solid rgba(245, 158, 11, 0.3)',
-                         borderRadius: 'var(--border-radius)',
-                         padding: '0.75rem',
-                         marginTop: '1rem'
-                       }}>
-                         <div style={{ 
-                           display: 'flex', 
-                           alignItems: 'center', 
-                           gap: '0.5rem',
-                           fontSize: '0.8rem',
-                           color: 'var(--warning-color)',
-                           fontWeight: '600',
-                           marginBottom: '0.25rem'
-                         }}>
-                           ⚠️ AWS EC2 - Scalabilità Critica
-                         </div>
-                         <div style={{ fontSize: '0.75rem', color: 'var(--gray-700)' }}>
-                           Crescita: +100% (€15→€30) per 100K utenti<br/>
-                           <strong>Azioni:</strong> Auto-scaling, Reserved Instances, Container optimization
-                         </div>
-                       </div>
-                     </div>
+                    <div className="phase-card">
+                      <h4>🔴 Priorità Alta - Servizi Costosi</h4>
+                      {serviziRicorrenti
+                        .filter((s) => s.costo100000 > 50)
+                        .sort((a, b) => b.costo100000 - a.costo100000)
+                        .slice(0, 3)
+                        .map((servizio) => (
+                          <div key={servizio.id} className="priority-item high">
+                            <strong>{servizio.servizio}</strong>
+                            <span>€{servizio.costo100000}/mese</span>
+                            <small>Negozia contratti volume</small>
+                          </div>
+                        ))}
+
+                      {/* Warning specifico per AWS */}
+                      <div
+                        style={{
+                          background: "rgba(245, 158, 11, 0.1)",
+                          border: "1px solid rgba(245, 158, 11, 0.3)",
+                          borderRadius: "var(--border-radius)",
+                          padding: "0.75rem",
+                          marginTop: "1rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            fontSize: "0.8rem",
+                            color: "var(--warning-color)",
+                            fontWeight: "600",
+                            marginBottom: "0.25rem",
+                          }}
+                        >
+                          ⚠️ AWS EC2 - Scalabilità Critica
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--gray-700)",
+                          }}
+                        >
+                          Crescita: +100% (€15→€30) per 100K utenti
+                          <br />
+                          <strong>Azioni:</strong> Auto-scaling, Reserved
+                          Instances, Container optimization
+                        </div>
+                      </div>
+                    </div>
                     <div className="phase-card">
                       <h4>🟡 Priorità Media - Crescita Variabile</h4>
                       {serviziRicorrenti
