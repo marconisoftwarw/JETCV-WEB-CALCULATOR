@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -17,9 +17,6 @@ import {
   TrendingUp,
   DollarSign,
   Users,
-  Edit3,
-  Save,
-  X,
   Settings,
   PlusCircle,
 } from "lucide-react";
@@ -100,7 +97,7 @@ const SERVIZI_RICORRENTI: ServizioRow[] = [
   },
   {
     id: crypto.randomUUID(),
-    servizio: "Verify(KYC)",
+    servizio: "Veriff(KYC)",
     costo1000: 60,
     costo10000: 60,
     costo100000: 60,
@@ -158,8 +155,8 @@ export default function DashboardServizi() {
     useState<ServizioRow[]>(SERVIZI_RICORRENTI);
   const [scenariCustom, setScenariCustom] =
     useState<ScenarioCustom[]>(SCENARI_DEFAULT);
-  const [editingCell, setEditingCell] = useState<string | null>(null);
-  const [tempValue, setTempValue] = useState<string>("");
+  // const [editingCell, setEditingCell] = useState<string | null>(null);
+  // const [tempValue, setTempValue] = useState<string>("");
   const [showScenarioForm, setShowScenarioForm] = useState(false);
   const [nuovoScenario, setNuovoScenario] = useState({
     nome: "",
@@ -171,25 +168,29 @@ export default function DashboardServizi() {
   const [percentualeUtentiAttivi, setPercentualeUtentiAttivi] = useState(50); // Percentuale degli utenti attivi
   const [numeroUpdateMint, setNumeroUpdateMint] = useState(2);
 
-  // State per parametri di Verify(KYC)
+  // State per parametri di Veriff(KYC)
   const [percentualeCertificatori, setPercentualeCertificatori] = useState(10); // Percentuale degli utenti certificatori
 
-  // Funzione per calcolare il costo di Verify(KYC)
-  const calcolaCostoVerify = (numeroUtenti: number) => {
-    // Formula: (49 + (numero totale di utenti certificatori * 0.80)) / 12
-    const utentiCertificatori = (numeroUtenti * percentualeCertificatori) / 100;
-    return 49 + (utentiCertificatori * 0.8) / 12;
-  };
+  // Funzione per calcolare il costo di Veriff(KYC)
+  const calcolaCostoVeriff = useCallback(
+    (numeroUtenti: number) => {
+      // Formula: (49 + (numero totale di utenti certificatori * 0.80)) / 12
+      const utentiCertificatori =
+        (numeroUtenti * percentualeCertificatori) / 100;
+      return 49 + (utentiCertificatori * 0.8) / 12;
+    },
+    [percentualeCertificatori],
+  );
 
   // Funzione per calcolare il costo di Crossmint
-  const calcolaCostoCrossmint = (numeroUtenti: number) => {
+  const calcolaCostoCrossmint = useCallback((numeroUtenti: number) => {
     // Formula: ((numeroutenti*0.10) /12)+ (utentiAttivi% * numeroUtenti * 0.05 * numeroUpdateMint)
     const costoFisso = (numeroUtenti * 0.1) / 12;
     const utentiAttiviEffettivi =
       (numeroUtenti * percentualeUtentiAttivi) / 100;
     const costoVariabile = utentiAttiviEffettivi * 0.05 * numeroUpdateMint;
     return costoFisso + costoVariabile;
-  };
+  }, [percentualeUtentiAttivi, numeroUpdateMint]);
 
   // Scenari ordinati
   const scenariOrdinati = useMemo(
@@ -213,9 +214,9 @@ export default function DashboardServizi() {
           if (s.servizio === "Crossmint") {
             costo = calcolaCostoCrossmint(1000);
           }
-          // Applica la formula speciale per Verify(KYC)
-          if (s.servizio === "Verify(KYC)") {
-            costo = calcolaCostoVerify(1000);
+          // Applica la formula speciale per Veriff(KYC)
+          if (s.servizio === "Veriff(KYC)") {
+            costo = calcolaCostoVeriff(1000);
           }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
@@ -233,9 +234,9 @@ export default function DashboardServizi() {
           if (s.servizio === "Crossmint") {
             costo = calcolaCostoCrossmint(10000);
           }
-          // Applica la formula speciale per Verify(KYC)
-          if (s.servizio === "Verify(KYC)") {
-            costo = calcolaCostoVerify(10000);
+          // Applica la formula speciale per Veriff(KYC)
+          if (s.servizio === "Veriff(KYC)") {
+            costo = calcolaCostoVeriff(10000);
           }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
@@ -253,9 +254,9 @@ export default function DashboardServizi() {
           if (s.servizio === "Crossmint") {
             costo = calcolaCostoCrossmint(100000);
           }
-          // Applica la formula speciale per Verify(KYC)
-          if (s.servizio === "Verify(KYC)") {
-            costo = calcolaCostoVerify(100000);
+          // Applica la formula speciale per Veriff(KYC)
+          if (s.servizio === "Veriff(KYC)") {
+            costo = calcolaCostoVeriff(100000);
           }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
@@ -274,9 +275,9 @@ export default function DashboardServizi() {
           if (s.servizio === "Crossmint") {
             costo = calcolaCostoCrossmint(scenario.utenti);
           }
-          // Applica la formula speciale per Verify(KYC)
-          if (s.servizio === "Verify(KYC)") {
-            costo = calcolaCostoVerify(scenario.utenti);
+          // Applica la formula speciale per Veriff(KYC)
+          if (s.servizio === "Veriff(KYC)") {
+            costo = calcolaCostoVeriff(scenario.utenti);
           }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
@@ -299,11 +300,8 @@ export default function DashboardServizi() {
   }, [
     serviziRicorrenti,
     scenariOrdinati,
-    percentualeUtentiAttivi,
-    numeroUpdateMint,
-    percentualeCertificatori,
     calcolaCostoCrossmint,
-    calcolaCostoVerify,
+    calcolaCostoVeriff,
   ]);
 
   // Configurazione grafici Chart.js
@@ -405,7 +403,8 @@ export default function DashboardServizi() {
     };
   };
 
-  // Handlers
+  // Handlers (editing disabilitato)
+  /*
   const startEditing = (cellId: string, currentValue: string | number) => {
     setEditingCell(cellId);
     setTempValue(String(currentValue));
@@ -430,6 +429,7 @@ export default function DashboardServizi() {
     setEditingCell(null);
     setTempValue("");
   };
+  */
 
   const addServizio = () => {
     const nuovoServizio: ServizioRow = {
@@ -871,7 +871,7 @@ export default function DashboardServizi() {
                               color: "var(--gray-700)",
                             }}
                           >
-                            Verify(KYC) ({percentualeCertificatori}%
+                            Veriff(KYC) ({percentualeCertificatori}%
                             certificatori):
                           </strong>
                           <div
@@ -883,13 +883,13 @@ export default function DashboardServizi() {
                             }}
                           >
                             <span style={{ fontSize: "0.8rem" }}>
-                              1K: €{calcolaCostoVerify(1000).toFixed(2)}
+                              1K: €{calcolaCostoVeriff(1000).toFixed(2)}
                             </span>
                             <span style={{ fontSize: "0.8rem" }}>
-                              10K: €{calcolaCostoVerify(10000).toFixed(2)}
+                              10K: €{calcolaCostoVeriff(10000).toFixed(2)}
                             </span>
                             <span style={{ fontSize: "0.8rem" }}>
-                              100K: €{calcolaCostoVerify(100000).toFixed(2)}
+                              100K: €{calcolaCostoVeriff(100000).toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -933,46 +933,9 @@ export default function DashboardServizi() {
                     {serviziRicorrenti.map((servizio) => (
                       <tr key={servizio.id}>
                         <td>
-                          {editingCell === `${servizio.id}-servizio` ? (
-                            <div className="edit-form">
-                              <input
-                                value={tempValue}
-                                onChange={(e) => setTempValue(e.target.value)}
-                                className="edit-input"
-                                autoFocus
-                                placeholder="Nome servizio"
-                              />
-                              <div className="edit-actions">
-                                <button
-                                  onClick={() =>
-                                    saveEdit(servizio.id, "servizio", tempValue)
-                                  }
-                                  className="edit-btn edit-btn-save"
-                                >
-                                  <Save size={12} />
-                                </button>
-                                <button
-                                  onClick={cancelEdit}
-                                  className="edit-btn edit-btn-cancel"
-                                >
-                                  <X size={12} />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="editable-cell"
-                              onClick={() =>
-                                startEditing(
-                                  `${servizio.id}-servizio`,
-                                  servizio.servizio,
-                                )
-                              }
-                            >
-                              <strong>{servizio.servizio}</strong>
-                              <Edit3 className="edit-icon" />
-                            </div>
-                          )}
+                          <div className="service-name-cell">
+                            <strong>{servizio.servizio}</strong>
+                          </div>
                         </td>
 
                         {/* Colonne dinamiche per ogni scenario */}
@@ -999,9 +962,9 @@ export default function DashboardServizi() {
                           if (servizio.servizio === "Crossmint") {
                             valore = calcolaCostoCrossmint(scenario.utenti);
                           }
-                          // Applica la formula speciale per Verify(KYC)
-                          if (servizio.servizio === "Verify(KYC)") {
-                            valore = calcolaCostoVerify(scenario.utenti);
+                          // Applica la formula speciale per Veriff(KYC)
+                          if (servizio.servizio === "Veriff(KYC)") {
+                            valore = calcolaCostoVeriff(scenario.utenti);
                           }
                           // App Store e Play Store hanno costi fissi
                           if (servizio.servizio === "App Store") {
@@ -1024,7 +987,7 @@ export default function DashboardServizi() {
                               style={{ textAlign: "center" }}
                             >
                               {servizio.servizio === "Crossmint" ||
-                              servizio.servizio === "Verify(KYC)" ||
+                              servizio.servizio === "Veriff(KYC)" ||
                               servizio.servizio === "App Store" ||
                               servizio.servizio === "Play Store" ? (
                                 <span
@@ -1037,57 +1000,16 @@ export default function DashboardServizi() {
                                   }}
                                   title={
                                     servizio.servizio === "Crossmint" ||
-                                    servizio.servizio === "Verify(KYC)"
+                                    servizio.servizio === "Veriff(KYC)"
                                       ? "Calcolato automaticamente con formula personalizzata"
                                       : "Costo fisso per tutti gli scenari"
                                   }
                                 >
                                   €{valore.toFixed(2)}
                                 </span>
-                              ) : editingCell ===
-                                `${servizio.id}-${colonnaKey}` ? (
-                                <div className="edit-form">
-                                  <input
-                                    type="number"
-                                    value={tempValue}
-                                    onChange={(e) =>
-                                      setTempValue(e.target.value)
-                                    }
-                                    className="edit-input"
-                                    autoFocus
-                                    placeholder="0"
-                                    style={{ textAlign: "center" }}
-                                  />
-                                  <div className="edit-actions">
-                                    <button
-                                      onClick={() =>
-                                        saveEdit(
-                                          servizio.id,
-                                          colonnaKey,
-                                          tempValue,
-                                        )
-                                      }
-                                      className="edit-btn edit-btn-save"
-                                    >
-                                      <Save size={12} />
-                                    </button>
-                                    <button
-                                      onClick={cancelEdit}
-                                      className="edit-btn edit-btn-cancel"
-                                    >
-                                      <X size={12} />
-                                    </button>
-                                  </div>
-                                </div>
                               ) : (
                                 <span
                                   className={`cost-badge ${badgeClass}`}
-                                  onClick={() =>
-                                    startEditing(
-                                      `${servizio.id}-${colonnaKey}`,
-                                      valore,
-                                    )
-                                  }
                                   style={{
                                     backgroundColor: scenario.colore + "20",
                                     color: scenario.colore,
@@ -1095,6 +1017,7 @@ export default function DashboardServizi() {
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "0.25rem",
+                                    cursor: "default",
                                   }}
                                   title={
                                     servizio.servizio === "AWS EC2" &&

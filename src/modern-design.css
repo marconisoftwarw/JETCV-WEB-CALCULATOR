@@ -353,28 +353,12 @@ body {
   border-bottom: none;
 }
 
-/* Editable Cells */
-.editable-cell {
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Service Name Cells (non-editable) */
+.service-name-cell {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.editable-cell:hover {
-  color: var(--primary-color);
-}
-
-.edit-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.editable-cell:hover .edit-icon {
-  opacity: 1;
+  padding: 0.5rem 0;
 }
 
 .edit-form {
