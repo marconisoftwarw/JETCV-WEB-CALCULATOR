@@ -354,7 +354,7 @@ export default function DashboardServizi() {
         <div className="header">
           <div className="header-content">
           <div>
-              <h1 className="header-title">Cloud Cost Calculator</h1>
+              <h1 className="header-title">JECT Cost Calculator</h1>
               <p className="header-subtitle">Analizza costi con scenari personalizzabili</p>
             </div>
             <div className="header-actions">
@@ -384,32 +384,14 @@ export default function DashboardServizi() {
 
         {/* Form Nuovo Scenario */}
         {showScenarioForm && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: 'var(--border-radius-xl)',
-              padding: '2rem',
-              maxWidth: '500px',
-              width: '90%',
-              boxShadow: 'var(--shadow-xl)'
-            }}>
-              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3 className="modal-title">
                 Crea Scenario Personalizzato
               </h3>
               
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <div className="form-group">
+                <label className="form-label">
                   Nome Scenario
                 </label>
                 <input
@@ -417,13 +399,12 @@ export default function DashboardServizi() {
                   value={nuovoScenario.nome}
                   onChange={(e) => setNuovoScenario(prev => ({ ...prev, nome: e.target.value }))}
                   placeholder="es. 5K Utenti, Startup, Enterprise..."
-                  className="edit-input"
-                  style={{ width: '100%' }}
+                  className="form-input"
                 />
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <div className="form-group">
+                <label className="form-label">
                   Numero Utenti
                 </label>
                 <input
@@ -431,34 +412,28 @@ export default function DashboardServizi() {
                   value={nuovoScenario.utenti || ''}
                   onChange={(e) => setNuovoScenario(prev => ({ ...prev, utenti: Number(e.target.value) }))}
                   placeholder="5000"
-                  className="edit-input"
-                  style={{ width: '100%' }}
+                  className="form-input"
                 />
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <div className="form-group">
+                <label className="form-label">
                   Colore
                 </label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div className="color-picker">
                   {COLORI_SCENARI.map((colore, index) => (
                     <button
                       key={index}
                       onClick={() => setNuovoScenario(prev => ({ ...prev, colore }))}
-                      style={{
-                        width: '2rem',
-                        height: '2rem',
-                        backgroundColor: colore,
-                        border: nuovoScenario.colore === colore ? '3px solid #333' : '2px solid #ddd',
-                        borderRadius: '50%',
-                        cursor: 'pointer'
-                      }}
+                      className={`color-option ${nuovoScenario.colore === colore ? 'selected' : ''}`}
+                      style={{ backgroundColor: colore }}
+                      title={`Colore ${index + 1}`}
                     />
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <div className="form-actions">
                 <button 
                   onClick={() => setShowScenarioForm(false)}
                   className="btn btn-secondary"
