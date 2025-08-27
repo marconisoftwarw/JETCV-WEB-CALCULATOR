@@ -112,6 +112,20 @@ const SERVIZI_RICORRENTI: ServizioRow[] = [
     costo10000: 50,
     costo100000: 50,
   },
+  {
+    id: crypto.randomUUID(),
+    servizio: "App Store",
+    costo1000: 8.25, // 99€/anno = 8.25€/mese
+    costo10000: 8.25,
+    costo100000: 8.25,
+  },
+  {
+    id: crypto.randomUUID(),
+    servizio: "Play Store",
+    costo1000: 2.08, // 25€ una tantum ammortizzato su 12 mesi
+    costo10000: 2.08,
+    costo100000: 2.08,
+  },
 ];
 
 // Scenari predefiniti
@@ -203,6 +217,13 @@ export default function DashboardServizi() {
           if (s.servizio === "Verify(KYC)") {
             costo = calcolaCostoVerify(1000);
           }
+          // App Store e Play Store hanno costi fissi
+          if (s.servizio === "App Store") {
+            costo = 8.25; // 99€/anno = 8.25€/mese
+          }
+          if (s.servizio === "Play Store") {
+            costo = 2.08; // 25€ una tantum ammortizzato
+          }
           return sum + costo;
         }, 0);
       } else if (scenario.utenti === 10000) {
@@ -215,6 +236,13 @@ export default function DashboardServizi() {
           // Applica la formula speciale per Verify(KYC)
           if (s.servizio === "Verify(KYC)") {
             costo = calcolaCostoVerify(10000);
+          }
+          // App Store e Play Store hanno costi fissi
+          if (s.servizio === "App Store") {
+            costo = 8.25; // 99€/anno = 8.25€/mese
+          }
+          if (s.servizio === "Play Store") {
+            costo = 2.08; // 25€ una tantum ammortizzato
           }
           return sum + costo;
         }, 0);
@@ -229,6 +257,13 @@ export default function DashboardServizi() {
           if (s.servizio === "Verify(KYC)") {
             costo = calcolaCostoVerify(100000);
           }
+          // App Store e Play Store hanno costi fissi
+          if (s.servizio === "App Store") {
+            costo = 8.25; // 99€/anno = 8.25€/mese
+          }
+          if (s.servizio === "Play Store") {
+            costo = 2.08; // 25€ una tantum ammortizzato
+          }
           return sum + costo;
         }, 0);
       } else {
@@ -242,6 +277,13 @@ export default function DashboardServizi() {
           // Applica la formula speciale per Verify(KYC)
           if (s.servizio === "Verify(KYC)") {
             costo = calcolaCostoVerify(scenario.utenti);
+          }
+          // App Store e Play Store hanno costi fissi
+          if (s.servizio === "App Store") {
+            costo = 8.25; // 99€/anno = 8.25€/mese
+          }
+          if (s.servizio === "Play Store") {
+            costo = 2.08; // 25€ una tantum ammortizzato
           }
           return sum + costo;
         }, 0);
@@ -510,12 +552,12 @@ export default function DashboardServizi() {
         {/* Header */}
         <div className="header">
           <div className="header-content">
-            <div>
+          <div>
               <h1 className="header-title">JECT Cost Calculator</h1>
               <p className="header-subtitle">
                 Analizza costi con scenari personalizzabili
               </p>
-            </div>
+          </div>
             <div className="header-actions">
               <button
                 onClick={() => setShowScenarioForm(true)}
@@ -549,7 +591,7 @@ export default function DashboardServizi() {
 
               <div className="form-group">
                 <label className="form-label">Nome Scenario</label>
-                <input
+              <input
                   type="text"
                   value={nuovoScenario.nome}
                   onChange={(e) =>
@@ -698,7 +740,7 @@ export default function DashboardServizi() {
                     <input
                       type="number"
                       value={percentualeUtentiAttivi}
-                      onChange={(e) => {
+                onChange={(e) => {
                         const value = Number(e.target.value);
                         if (value >= 0 && value <= 100) {
                           setPercentualeUtentiAttivi(value);
@@ -714,7 +756,7 @@ export default function DashboardServizi() {
                   <div className="crossmint-input-group">
                     <label className="crossmint-label">
                       Numero Update Mint Mensile
-                    </label>
+            </label>
                     <input
                       type="number"
                       value={numeroUpdateMint}
@@ -820,8 +862,8 @@ export default function DashboardServizi() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+          </div>
+        </div>
 
               <div className="table-container">
                 <table className="data-table">
@@ -919,14 +961,21 @@ export default function DashboardServizi() {
                                   ? servizio.costo100000
                                   : Number(servizio[colonnaKey]) || 0;
 
-                          // Applica la formula speciale per Crossmint
-                          if (servizio.servizio === "Crossmint") {
-                            valore = calcolaCostoCrossmint(scenario.utenti);
-                          }
-                          // Applica la formula speciale per Verify(KYC)
-                          if (servizio.servizio === "Verify(KYC)") {
-                            valore = calcolaCostoVerify(scenario.utenti);
-                          }
+                                                     // Applica la formula speciale per Crossmint
+                           if (servizio.servizio === "Crossmint") {
+                             valore = calcolaCostoCrossmint(scenario.utenti);
+                           }
+                           // Applica la formula speciale per Verify(KYC)
+                           if (servizio.servizio === "Verify(KYC)") {
+                             valore = calcolaCostoVerify(scenario.utenti);
+                           }
+                           // App Store e Play Store hanno costi fissi
+                           if (servizio.servizio === "App Store") {
+                             valore = 8.25; // 99€/anno = 8.25€/mese
+                           }
+                           if (servizio.servizio === "Play Store") {
+                             valore = 2.08; // 25€ una tantum ammortizzato
+                           }
 
                           const badgeClass =
                             index === 0
@@ -935,13 +984,15 @@ export default function DashboardServizi() {
                                 ? "cost-badge-success"
                                 : "cost-badge-warning";
 
-                          return (
+                      return (
                             <td
                               key={scenario.id}
                               style={{ textAlign: "center" }}
                             >
-                              {servizio.servizio === "Crossmint" ||
-                              servizio.servizio === "Verify(KYC)" ? (
+                                                             {servizio.servizio === "Crossmint" ||
+                               servizio.servizio === "Verify(KYC)" ||
+                               servizio.servizio === "App Store" ||
+                               servizio.servizio === "Play Store" ? (
                                 <span
                                   className={`cost-badge ${badgeClass}`}
                                   style={{
@@ -950,7 +1001,11 @@ export default function DashboardServizi() {
                                     borderColor: scenario.colore + "40",
                                     cursor: "default",
                                   }}
-                                  title="Calcolato automaticamente con formula personalizzata"
+                                                                     title={
+                                     servizio.servizio === "Crossmint" || servizio.servizio === "Verify(KYC)" 
+                                       ? "Calcolato automaticamente con formula personalizzata"
+                                       : "Costo fisso per tutti gli scenari"
+                                   }
                                 >
                                   €{valore.toFixed(2)}
                                 </span>
@@ -1220,9 +1275,9 @@ export default function DashboardServizi() {
                           </div>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+              </div>
 
                 {/* Riepilogo Comparativo */}
                 <div
@@ -1285,7 +1340,7 @@ export default function DashboardServizi() {
                           (s) => totaliScenari[s.id]?.annuale || 0,
                         ),
                       ).toLocaleString()}
-                    </div>
+                  </div>
 
                     <div>
                       <strong>Scenario più costoso:</strong>
@@ -1304,7 +1359,7 @@ export default function DashboardServizi() {
                           (s) => totaliScenari[s.id]?.annuale || 0,
                         ),
                       ).toLocaleString()}
-                    </div>
+                  </div>
 
                     <div>
                       <strong>Differenza massima:</strong>
@@ -1322,7 +1377,7 @@ export default function DashboardServizi() {
                         )
                       ).toLocaleString()}{" "}
                       annui
-                    </div>
+                </div>
 
                     <div>
                       <strong>Media annuale:</strong>
@@ -1336,8 +1391,8 @@ export default function DashboardServizi() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+          </div>
+        </div>
 
             {/* Grafici Dinamici */}
             <div className="charts-section">
@@ -1389,7 +1444,7 @@ export default function DashboardServizi() {
             <div className="strategy-header">
               <div className="strategy-icon">
                 <TrendingUp size={24} />
-              </div>
+                </div>
               <div>
                 <h2 className="strategy-title">
                   🎯 Strategia Business Planning
@@ -1506,7 +1561,7 @@ export default function DashboardServizi() {
                             <small>Ottimizza utilizzo</small>
                           </div>
                         ))}
-                    </div>
+                </div>
                   </div>
                 </div>
               </div>
@@ -1589,7 +1644,7 @@ export default function DashboardServizi() {
                         ).toLocaleString()}
                       </p>
                       <small>Prepara contratti scalabili</small>
-                    </div>
+              </div>
                     <div className="risk-card medium-risk">
                       <h4>🟡 Medio Rischio</h4>
                       <p>
@@ -1597,7 +1652,7 @@ export default function DashboardServizi() {
                       </p>
                       <p>Ottimizzazione: -30% costi</p>
                       <small>Rivedi servizi non essenziali</small>
-                    </div>
+              </div>
                     <div className="risk-card low-risk">
                       <h4>🟢 Basso Rischio</h4>
                       <p>
@@ -1605,8 +1660,8 @@ export default function DashboardServizi() {
                       </p>
                       <p>Scenario attuale mantieni</p>
                       <small>Monitoraggio standard</small>
-                    </div>
-                  </div>
+              </div>
+            </div>
                 </div>
               </div>
 
@@ -1674,9 +1729,9 @@ export default function DashboardServizi() {
                                     : "🔴 Critico"}
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      );
+      </div>
+    </div>
+  );
                     })}
                   </div>
                 </div>
