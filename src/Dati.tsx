@@ -755,7 +755,7 @@ export default function DashboardServizi() {
                   </div>
                   <div className="crossmint-input-group">
                     <label className="crossmint-label">
-                      Numero Update Mint Mensile
+                      Numero Update
             </label>
                     <input
                       type="number"
