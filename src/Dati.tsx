@@ -51,6 +51,15 @@ interface ScenarioCustom {
   ordinamento: number;
 }
 
+// Nuova interfaccia per la tabella media
+interface MediaRow {
+  id: string;
+  tipo: string;
+  maxPerCustomer: number;
+  duration: string;
+  weightGB: number;
+}
+
 const COLORI_SCENARI = [
   "#2563eb", // Blu
   "#059669", // Verde
@@ -154,8 +163,8 @@ export default function DashboardServizi() {
     useState<ServizioRow[]>(SERVIZI_RICORRENTI);
   const [scenariCustom, setScenariCustom] =
     useState<ScenarioCustom[]>(SCENARI_DEFAULT);
-  // const [editingCell, setEditingCell] = useState<string | null>(null);
-  // const [tempValue, setTempValue] = useState<string>("");
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [tempValue, setTempValue] = useState<string>("");
   const [showScenarioForm, setShowScenarioForm] = useState(false);
   const [nuovoScenario, setNuovoScenario] = useState({
     nome: "",
@@ -170,6 +179,43 @@ export default function DashboardServizi() {
   // State per parametri di Veriff(KYC)
   const [percentualeCertificatori, setPercentualeCertificatori] = useState(10); // Percentuale degli utenti certificatori
 
+  // State per la tabella media
+  const [mediaTable, setMediaTable] = useState<MediaRow[]>([
+    {
+      id: "foto",
+      tipo: "Foto",
+      maxPerCustomer: 3,
+      duration: "-",
+      weightGB: 0.0000156,
+    },
+    {
+      id: "audio",
+      tipo: "Audio",
+      maxPerCustomer: 1,
+      duration: "45 sec",
+      weightGB: 0.00244,
+    },
+    {
+      id: "video",
+      tipo: "Video",
+      maxPerCustomer: 1,
+      duration: "30 sec",
+      weightGB: 0.00244,
+    },
+  ]);
+
+  // Calcola costo storage per tipo media
+  const calcolaCostoStorage = (
+    weightGB: number,
+    maxPerCustomer: number,
+    utenti: number,
+  ) => {
+    const storagePerUtente = weightGB * maxPerCustomer;
+    const storageTotale = storagePerUtente * utenti;
+    const costoStorage = storageTotale * 0.021; // $0.021 per GB
+    return costoStorage;
+  };
+
   // Funzione per calcolare il costo di Veriff(KYC)
   const calcolaCostoVeriff = useCallback(
     (numeroUtenti: number) => {
@@ -182,14 +228,17 @@ export default function DashboardServizi() {
   );
 
   // Funzione per calcolare il costo di Crossmint
-  const calcolaCostoCrossmint = useCallback((numeroUtenti: number) => {
-    // Formula: ((numeroutenti*0.10) /12)+ (utentiAttivi% * numeroUtenti * 0.05 * numeroUpdateMint)
-    const costoFisso = (numeroUtenti * 0.1) / 12;
-    const utentiAttiviEffettivi =
-      (numeroUtenti * percentualeUtentiAttivi) / 100;
-    const costoVariabile = utentiAttiviEffettivi * 0.05 * numeroUpdateMint;
-    return costoFisso + costoVariabile;
-  }, [percentualeUtentiAttivi, numeroUpdateMint]);
+  const calcolaCostoCrossmint = useCallback(
+    (numeroUtenti: number) => {
+      // Formula: ((numeroutenti*0.10) /12)+ (utentiAttivi% * numeroUtenti * 0.05 * numeroUpdateMint)
+      const costoFisso = (numeroUtenti * 0.1) / 12;
+      const utentiAttiviEffettivi =
+        (numeroUtenti * percentualeUtentiAttivi) / 100;
+      const costoVariabile = utentiAttiviEffettivi * 0.05 * numeroUpdateMint;
+      return costoFisso + costoVariabile;
+    },
+    [percentualeUtentiAttivi, numeroUpdateMint],
+  );
 
   // Scenari ordinati
   const scenariOrdinati = useMemo(
@@ -289,9 +338,21 @@ export default function DashboardServizi() {
         }, 0);
       }
 
+      // Aggiungi i costi di storage media per questo scenario
+      const costoStorageMedia = mediaTable.reduce((sum, media) => {
+        return (
+          sum +
+          calcolaCostoStorage(
+            media.weightGB,
+            media.maxPerCustomer,
+            scenario.utenti,
+          )
+        );
+      }, 0);
+
       totali[scenario.id] = {
-        mensile: totale,
-        annuale: totale * 12,
+        mensile: totale + costoStorageMedia,
+        annuale: (totale + costoStorageMedia) * 12,
       };
     });
 
@@ -301,6 +362,7 @@ export default function DashboardServizi() {
     scenariOrdinati,
     calcolaCostoCrossmint,
     calcolaCostoVeriff,
+    mediaTable,
   ]);
 
   // Configurazione grafici Chart.js
@@ -382,18 +444,37 @@ export default function DashboardServizi() {
   const getChartDataForScenario = (scenario: ScenarioCustom) => {
     const colonnaKey = `costo${scenario.utenti}` as keyof ServizioRow;
 
-    return {
-      labels: serviziRicorrenti.map((s) =>
+    // Dati servizi esistenti
+    const serviziData = serviziRicorrenti.map((s) => {
+      if (scenario.utenti === 1000) return s.costo1000;
+      if (scenario.utenti === 10000) return s.costo10000;
+      if (scenario.utenti === 100000) return s.costo100000;
+      return Number(s[colonnaKey]) || 0;
+    });
+
+    // Dati storage media
+    const mediaData = mediaTable.map((media) =>
+      calcolaCostoStorage(
+        media.weightGB,
+        media.maxPerCustomer,
+        scenario.utenti,
+      ),
+    );
+
+    // Combina i dati
+    const allData = [...serviziData, ...mediaData];
+    const allLabels = [
+      ...serviziRicorrenti.map((s) =>
         s.servizio.length > 8 ? s.servizio.substring(0, 8) + "..." : s.servizio,
       ),
+      ...mediaTable.map((media) => `${media.tipo} Storage`),
+    ];
+
+    return {
+      labels: allLabels,
       datasets: [
         {
-          data: serviziRicorrenti.map((s) => {
-            if (scenario.utenti === 1000) return s.costo1000;
-            if (scenario.utenti === 10000) return s.costo10000;
-            if (scenario.utenti === 100000) return s.costo100000;
-            return Number(s[colonnaKey]) || 0;
-          }),
+          data: allData,
           backgroundColor: scenario.colore,
           hoverBackgroundColor: scenario.colore + "dd",
           borderRadius: 4,
@@ -515,6 +596,53 @@ export default function DashboardServizi() {
     XLSX.writeFile(wb, "costi-servizi-custom.csv");
   };
 
+  // Handlers per editing
+  const startEditing = (cellId: string, currentValue: string | number) => {
+    setEditingCell(cellId);
+    setTempValue(String(currentValue));
+  };
+
+  const saveEdit = (id: string, field: string, value: string) => {
+    if (field === "servizio") {
+      setServiziRicorrenti((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, servizio: value } : r)),
+      );
+    } else {
+      const numValue = Number(value) || 0;
+      setServiziRicorrenti((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, [field]: numValue } : r)),
+      );
+    }
+    setEditingCell(null);
+    setTempValue("");
+  };
+
+  const cancelEdit = () => {
+    setEditingCell(null);
+    setTempValue("");
+  };
+
+  // Handlers per editing tabella media
+  const startEditingMedia = (cellId: string, currentValue: string | number) => {
+    setEditingCell(cellId);
+    setTempValue(String(currentValue));
+  };
+
+  const saveEditMedia = (id: string, field: string, value: string) => {
+    if (field === "tipo" || field === "duration") {
+      setMediaTable((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
+      );
+    } else {
+      const numValue = Number(value) || 0;
+      setMediaTable((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, [field]: numValue } : r)),
+      );
+    }
+    setEditingCell(null);
+    setTempValue("");
+  };
+
   return (
     <div className="app-container">
       <div className="main-content">
@@ -625,65 +753,186 @@ export default function DashboardServizi() {
         <div className="content">
           {/* Stats Cards Dinamiche */}
           <div className="stats-grid">
-            {scenariOrdinati.map((scenario, index) => (
-              <div key={scenario.id} className="stat-card">
-                <div className="stat-card-content">
-                  <div className="stat-card-header">
+            {scenariOrdinati.map((scenario, index) => {
+              const costoPerUtente =
+                (totaliScenari[scenario.id]?.mensile || 0) / scenario.utenti;
+              const arpuTarget = 50; // ARPU fisso a €50
+              const efficiencyRatio = arpuTarget / costoPerUtente;
+
+              return (
+                <div key={scenario.id} className="stat-card">
+                  <div className="stat-card-content">
+                    <div className="stat-card-header">
+                      <div
+                        className="stat-icon"
+                        style={{
+                          backgroundColor: scenario.colore + "20",
+                          color: scenario.colore,
+                        }}
+                      >
+                        {index === 0 ? (
+                          <Users size={24} />
+                        ) : index === 1 ? (
+                          <TrendingUp size={24} />
+                        ) : (
+                          <DollarSign size={24} />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="stat-title">{scenario.nome}</h3>
+                        <div className="stat-value">
+                          €
+                          {totaliScenari[
+                            scenario.id
+                          ]?.mensile.toLocaleString() || "0"}
+                          /MESE
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Nuova sezione per ARPU e CPU */}
                     <div
-                      className="stat-icon"
+                      className="stat-metrics"
                       style={{
-                        backgroundColor: scenario.colore + "20",
-                        color: scenario.colore,
+                        marginTop: "1rem",
+                        padding: "0.75rem",
+                        backgroundColor: "var(--gray-50)",
+                        borderRadius: "var(--border-radius)",
+                        border: `1px solid ${scenario.colore}20`,
                       }}
                     >
-                      {index === 0 ? (
-                        <Users size={24} />
-                      ) : index === 1 ? (
-                        <TrendingUp size={24} />
-                      ) : (
-                        <DollarSign size={24} />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="stat-title">{scenario.nome}</h3>
-                      <div className="stat-value">
-                        €
-                        {totaliScenari[scenario.id]?.mensile.toLocaleString() ||
-                          "0"}
-                        /MESE
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "0.75rem",
+                          marginBottom: "0.75rem",
+                        }}
+                      >
+                        <div style={{ textAlign: "center" }}>
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--gray-600)",
+                              fontWeight: "500",
+                              marginBottom: "0.25rem",
+                            }}
+                          >
+                            ARPU Target
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "1.125rem",
+                              fontWeight: "700",
+                              color: scenario.colore,
+                            }}
+                          >
+                            €{arpuTarget}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "center" }}>
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--gray-600)",
+                              fontWeight: "500",
+                              marginBottom: "0.25rem",
+                            }}
+                          >
+                            CPU
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "1.125rem",
+                              fontWeight: "700",
+                              color: scenario.colore,
+                            }}
+                          >
+                            €{costoPerUtente.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Efficiency Ratio */}
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: "0.5rem",
+                          backgroundColor: "white",
+                          borderRadius: "var(--border-radius-sm)",
+                          border: `1px solid ${scenario.colore}30`,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--gray-600)",
+                            fontWeight: "500",
+                            marginBottom: "0.25rem",
+                          }}
+                        >
+                          Efficiency Ratio
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "1rem",
+                            fontWeight: "700",
+                            color:
+                              efficiencyRatio > 2
+                                ? "var(--success-color)"
+                                : efficiencyRatio > 1
+                                  ? "var(--warning-color)"
+                                  : "var(--danger-color)",
+                          }}
+                        >
+                          {efficiencyRatio.toFixed(1)}x
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.625rem",
+                            color: "var(--gray-500)",
+                            marginTop: "0.25rem",
+                          }}
+                        >
+                          {efficiencyRatio > 2
+                            ? "✅ Ottimo"
+                            : efficiencyRatio > 1
+                              ? "⚠️ Attenzione"
+                              : "🔴 Critico"}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="stat-footer">
-                  <div className="stat-footer-text">
-                    <span className="stat-highlight">
-                      {scenario.utenti.toLocaleString()} utenti
-                    </span>{" "}
-                    • €
-                    {totaliScenari[scenario.id]?.annuale.toLocaleString() ||
-                      "0"}{" "}
-                    all'anno
-                    {![1000, 10000, 100000].includes(scenario.utenti) && (
-                      <button
-                        onClick={() => removeScenario(scenario.id)}
-                        style={{
-                          marginLeft: "0.5rem",
-                          color: "var(--danger-color)",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          fontSize: "0.75rem",
-                        }}
-                        title="Rimuovi scenario"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
+                  <div className="stat-footer">
+                    <div className="stat-footer-text">
+                      <span className="stat-highlight">
+                        {scenario.utenti.toLocaleString()} utenti
+                      </span>{" "}
+                      • €
+                      {totaliScenari[scenario.id]?.annuale.toLocaleString() ||
+                        "0"}{" "}
+                      all'anno
+                      {![1000, 10000, 100000].includes(scenario.utenti) && (
+                        <button
+                          onClick={() => removeScenario(scenario.id)}
+                          style={{
+                            marginLeft: "0.5rem",
+                            color: "var(--danger-color)",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: "0.75rem",
+                          }}
+                          title="Rimuovi scenario"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Layout principale */}
@@ -695,177 +944,6 @@ export default function DashboardServizi() {
                 <p className="table-description">
                   Gestisci costi per tutti gli scenari. Clicca per modificare.
                 </p>
-              </div>
-
-              {/* Controlli Crossmint */}
-              <div className="crossmint-controls">
-                <h3 className="crossmint-title">⚙️ Parametri Dinamici</h3>
-
-                {/* Warning AWS */}
-                <div
-                  style={{
-                    background: "rgba(245, 158, 11, 0.1)",
-                    border: "1px solid rgba(245, 158, 11, 0.3)",
-                    borderRadius: "var(--border-radius)",
-                    padding: "0.75rem",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      fontSize: "0.875rem",
-                      color: "var(--warning-color)",
-                      fontWeight: "600",
-                    }}
-                  >
-                    ⚠️ <strong>Nota importante AWS EC2:</strong>
-                  </div>
-                  <p
-                    style={{
-                      margin: "0.25rem 0 0 0",
-                      fontSize: "0.8rem",
-                      color: "var(--gray-700)",
-                      lineHeight: "1.4",
-                    }}
-                  >
-                    Il costo AWS raddoppia per 100K utenti (da €15 a €30/mese).
-                    Considera soluzioni di ottimizzazione come auto-scaling,
-                    istanze reserved o architetture serverless.
-                  </p>
-                </div>
-
-                <div className="crossmint-inputs">
-                  <div className="crossmint-input-group">
-                    <label className="crossmint-label">
-                      Percentuale Utenti Attivi (%)
-                    </label>
-                    <input
-                      type="number"
-                      value={percentualeUtentiAttivi}
-                      onChange={(e) => {
-                        const value = Number(e.target.value);
-                        if (value >= 0 && value <= 100) {
-                          setPercentualeUtentiAttivi(value);
-                        }
-                      }}
-                      className="crossmint-input"
-                      placeholder="50"
-                      min="0"
-                      max="100"
-                      step="1"
-                    />
-                  </div>
-                  <div className="crossmint-input-group">
-                    <label className="crossmint-label">Numero update mensili cv</label>
-                    <input
-                      type="number"
-                      value={numeroUpdateMint}
-                      onChange={(e) =>
-                        setNumeroUpdateMint(Number(e.target.value))
-                      }
-                      className="crossmint-input"
-                      placeholder="2"
-                      min="0"
-                      step="1"
-                    />
-                  </div>
-                  <div className="crossmint-input-group">
-                    <label className="crossmint-label">
-                      Percentuale Utenti Certificatori (%)
-                    </label>
-                    <input
-                      type="number"
-                      value={percentualeCertificatori}
-                      onChange={(e) => {
-                        const value = Number(e.target.value);
-                        if (value >= 0 && value <= 100) {
-                          setPercentualeCertificatori(value);
-                        }
-                      }}
-                      className="crossmint-input"
-                      placeholder="10"
-                      min="0"
-                      max="100"
-                      step="1"
-                    />
-                  </div>
-                  <div className="crossmint-preview">
-                    <div className="crossmint-preview-title">
-                      Anteprima Costi:
-                    </div>
-                    <div className="crossmint-preview-values">
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "1rem",
-                          marginBottom: "1rem",
-                        }}
-                      >
-                        <div>
-                          <strong
-                            style={{
-                              fontSize: "0.875rem",
-                              color: "var(--gray-700)",
-                            }}
-                          >
-                            Crossmint ({percentualeUtentiAttivi}% attivi):
-                          </strong>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.25rem",
-                              marginTop: "0.5rem",
-                            }}
-                          >
-                            <span style={{ fontSize: "0.8rem" }}>
-                              1K: €{calcolaCostoCrossmint(1000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              10K: €{calcolaCostoCrossmint(10000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              100K: €{calcolaCostoCrossmint(100000).toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                        <div>
-                          <strong
-                            style={{
-                              fontSize: "0.875rem",
-                              color: "var(--gray-700)",
-                            }}
-                          >
-                            Veriff(KYC) ({percentualeCertificatori}%
-                            certificatori):
-                          </strong>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.25rem",
-                              marginTop: "0.5rem",
-                            }}
-                          >
-                            <span style={{ fontSize: "0.8rem" }}>
-                              1K: €{calcolaCostoVeriff(1000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              10K: €{calcolaCostoVeriff(10000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              100K: €{calcolaCostoVeriff(100000).toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="table-container">
@@ -903,7 +981,47 @@ export default function DashboardServizi() {
                       <tr key={servizio.id}>
                         <td>
                           <div className="service-name-cell">
-                            <strong>{servizio.servizio}</strong>
+                            {editingCell === `${servizio.id}-servizio` ? (
+                              <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <input
+                                  type="text"
+                                  value={tempValue}
+                                  onChange={(e) => setTempValue(e.target.value)}
+                                  className="form-input"
+                                  style={{ width: "120px" }}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() =>
+                                    saveEdit(servizio.id, "servizio", tempValue)
+                                  }
+                                  className="edit-btn edit-btn-save"
+                                  style={{ padding: "0.25rem 0.5rem" }}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="edit-btn edit-btn-cancel"
+                                  style={{ padding: "0.25rem 0.5rem" }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <strong
+                                onClick={() =>
+                                  startEditing(
+                                    `${servizio.id}-servizio`,
+                                    servizio.servizio,
+                                  )
+                                }
+                                style={{ cursor: "pointer" }}
+                                title="Clicca per modificare"
+                              >
+                                {servizio.servizio}
+                              </strong>
+                            )}
                           </div>
                         </td>
 
@@ -950,6 +1068,9 @@ export default function DashboardServizi() {
                                 ? "cost-badge-success"
                                 : "cost-badge-warning";
 
+                          const isEditing =
+                            editingCell === `${servizio.id}-${colonnaKey}`;
+
                           return (
                             <td
                               key={scenario.id}
@@ -977,38 +1098,91 @@ export default function DashboardServizi() {
                                   €{valore.toFixed(2)}
                                 </span>
                               ) : (
-                                <span
-                                  className={`cost-badge ${badgeClass}`}
-                                  style={{
-                                    backgroundColor: scenario.colore + "20",
-                                    color: scenario.colore,
-                                    borderColor: scenario.colore + "40",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "0.25rem",
-                                    cursor: "default",
-                                  }}
-                                  title={
-                                    servizio.servizio === "AWS EC2" &&
-                                    scenario.utenti === 100000
-                                      ? "⚠️ ATTENZIONE: Costo raddoppia per 100K utenti - Considera ottimizzazioni"
-                                      : undefined
-                                  }
-                                >
-                                  €{valore.toLocaleString()}
-                                  {servizio.servizio === "AWS EC2" &&
-                                    scenario.utenti === 100000 && (
-                                      <span
+                                <div>
+                                  {isEditing ? (
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        gap: "0.25rem",
+                                        justifyContent: "center",
+                                      }}
+                                    >
+                                      <input
+                                        type="number"
+                                        value={tempValue}
+                                        onChange={(e) =>
+                                          setTempValue(e.target.value)
+                                        }
+                                        className="form-input"
                                         style={{
+                                          width: "60px",
+                                          textAlign: "center",
+                                        }}
+                                        autoFocus
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          saveEdit(
+                                            servizio.id,
+                                            colonnaKey,
+                                            tempValue,
+                                          )
+                                        }
+                                        className="edit-btn edit-btn-save"
+                                        style={{
+                                          padding: "0.25rem 0.25rem",
                                           fontSize: "0.75rem",
-                                          color: "var(--warning-color)",
-                                          fontWeight: "bold",
                                         }}
                                       >
-                                        ⚠️
-                                      </span>
-                                    )}
-                                </span>
+                                        ✓
+                                      </button>
+                                      <button
+                                        onClick={cancelEdit}
+                                        className="edit-btn edit-btn-cancel"
+                                        style={{
+                                          padding: "0.25rem 0.25rem",
+                                          fontSize: "0.75rem",
+                                        }}
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span
+                                      className={`cost-badge ${badgeClass}`}
+                                      style={{
+                                        backgroundColor: scenario.colore + "20",
+                                        color: scenario.colore,
+                                        borderColor: scenario.colore + "40",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.25rem",
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() =>
+                                        startEditing(
+                                          `${servizio.id}-${colonnaKey}`,
+                                          valore,
+                                        )
+                                      }
+                                      title="Clicca per modificare"
+                                    >
+                                      €{valore.toLocaleString()}
+                                      {servizio.servizio === "AWS EC2" &&
+                                        scenario.utenti === 100000 && (
+                                          <span
+                                            style={{
+                                              fontSize: "0.75rem",
+                                              color: "var(--warning-color)",
+                                              fontWeight: "bold",
+                                            }}
+                                          >
+                                            ⚠️
+                                          </span>
+                                        )}
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </td>
                           );
@@ -1027,6 +1201,66 @@ export default function DashboardServizi() {
                       </tr>
                     ))}
 
+                    {/* Riga Media Storage */}
+                    <tr
+                      style={{
+                        backgroundColor: "var(--gray-100)",
+                        borderTop: "2px solid var(--gray-200)",
+                      }}
+                    >
+                      <td>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <span style={{ fontSize: "1.2rem" }}>💾</span>
+                          <strong>Media Storage</strong>
+                        </div>
+                      </td>
+                      {scenariOrdinati.map((scenario, index) => {
+                        const costoStorageMedia = mediaTable.reduce(
+                          (sum, media) => {
+                            return (
+                              sum +
+                              calcolaCostoStorage(
+                                media.weightGB,
+                                media.maxPerCustomer,
+                                scenario.utenti,
+                              )
+                            );
+                          },
+                          0,
+                        );
+
+                        const badgeClass =
+                          index === 0
+                            ? "cost-badge-primary"
+                            : index === 1
+                              ? "cost-badge-success"
+                              : "cost-badge-warning";
+                        return (
+                          <td key={scenario.id} style={{ textAlign: "center" }}>
+                            <span
+                              className={`cost-badge ${badgeClass}`}
+                              style={{
+                                backgroundColor: scenario.colore + "20",
+                                color: scenario.colore,
+                                borderColor: scenario.colore + "40",
+                                cursor: "default",
+                              }}
+                              title={`Foto: €${calcolaCostoStorage(mediaTable[0].weightGB, mediaTable[0].maxPerCustomer, scenario.utenti).toFixed(4)} | Audio: €${calcolaCostoStorage(mediaTable[1].weightGB, mediaTable[1].maxPerCustomer, scenario.utenti).toFixed(4)} | Video: €${calcolaCostoStorage(mediaTable[2].weightGB, mediaTable[2].maxPerCustomer, scenario.utenti).toFixed(4)}`}
+                            >
+                              €{costoStorageMedia.toFixed(4)}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      <td></td>
+                    </tr>
+
                     {/* Riga totali */}
                     <tr
                       style={{
@@ -1035,7 +1269,7 @@ export default function DashboardServizi() {
                       }}
                     >
                       <td>
-                        <strong>💰 TOTALE MENSILE</strong>
+                        <strong>💰 TOTALE MENSILE (con Storage)</strong>
                       </td>
                       {scenariOrdinati.map((scenario, index) => {
                         const badgeClass =
@@ -1340,6 +1574,641 @@ export default function DashboardServizi() {
                   </div>
                 </div>
               </div>
+
+              {/* Controlli Crossmint - SPOSTATI SOTTO I TOTALI */}
+              <div className="crossmint-controls">
+                <h3 className="crossmint-title">⚙️ Parametri Dinamici</h3>
+
+                {/* Warning AWS */}
+                <div
+                  style={{
+                    background: "rgba(245, 158, 11, 0.1)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    borderRadius: "var(--border-radius)",
+                    padding: "0.75rem",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      fontSize: "0.875rem",
+                      color: "var(--warning-color)",
+                      fontWeight: "600",
+                    }}
+                  >
+                    ⚠️ <strong>Nota importante AWS EC2:</strong>
+                  </div>
+                  <p
+                    style={{
+                      margin: "0.25rem 0 0 0",
+                      fontSize: "0.8rem",
+                      color: "var(--gray-700)",
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    Il costo AWS raddoppia per 100K utenti (da €15 a €30/mese).
+                    Considera soluzioni di ottimizzazione come auto-scaling,
+                    istanze reserved o architetture serverless.
+                  </p>
+                </div>
+
+                <div className="crossmint-inputs">
+                  <div className="crossmint-input-group">
+                    <label className="crossmint-label">
+                      Percentuale Utenti Attivi (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={percentualeUtentiAttivi}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        if (value >= 0 && value <= 100) {
+                          setPercentualeUtentiAttivi(value);
+                        }
+                      }}
+                      className="crossmint-input"
+                      placeholder="50"
+                      min="0"
+                      max="100"
+                      step="1"
+                    />
+                  </div>
+                  <div className="crossmint-input-group">
+                    <label className="crossmint-label">
+                      Numero update mensili cv
+                    </label>
+                    <input
+                      type="number"
+                      value={numeroUpdateMint}
+                      onChange={(e) =>
+                        setNumeroUpdateMint(Number(e.target.value))
+                      }
+                      className="crossmint-input"
+                      placeholder="2"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                  <div className="crossmint-input-group">
+                    <label className="crossmint-label">
+                      Percentuale Utenti Certificatori (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={percentualeCertificatori}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        if (value >= 0 && value <= 100) {
+                          setPercentualeCertificatori(value);
+                        }
+                      }}
+                      className="crossmint-input"
+                      placeholder="10"
+                      min="0"
+                      max="100"
+                      step="1"
+                    />
+                  </div>
+                  <div className="crossmint-preview">
+                    <div className="crossmint-preview-title">
+                      Anteprima Costi:
+                    </div>
+                    <div className="crossmint-preview-values">
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "1rem",
+                          marginBottom: "1rem",
+                        }}
+                      >
+                        <div>
+                          <strong
+                            style={{
+                              fontSize: "0.875rem",
+                              color: "var(--gray-700)",
+                            }}
+                          >
+                            Crossmint ({percentualeUtentiAttivi}% attivi):
+                          </strong>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.25rem",
+                              marginTop: "0.5rem",
+                            }}
+                          >
+                            <span style={{ fontSize: "0.8rem" }}>
+                              1K: €{calcolaCostoCrossmint(1000).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              10K: €{calcolaCostoCrossmint(10000).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              100K: €{calcolaCostoCrossmint(100000).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <strong
+                            style={{
+                              fontSize: "0.875rem",
+                              color: "var(--gray-700)",
+                            }}
+                          >
+                            Veriff(KYC) ({percentualeCertificatori}%
+                            certificatori):
+                          </strong>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.25rem",
+                              marginTop: "0.5rem",
+                            }}
+                          >
+                            <span style={{ fontSize: "0.8rem" }}>
+                              1K: €{calcolaCostoVeriff(1000).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              10K: €{calcolaCostoVeriff(10000).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              100K: €{calcolaCostoVeriff(100000).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Nuova Tabella Media */}
+            <div className="table-section">
+              <div className="table-header">
+                <h2 className="table-title">📱 Tabella Specifiche Media</h2>
+                <p className="table-description">
+                  Gestisci specifiche per foto, audio e video. Clicca per
+                  modificare.
+                </p>
+              </div>
+
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Media Type</th>
+                      <th>N° max / customer</th>
+                      <th>Duration</th>
+                      <th>Weight (GB)</th>
+                      <th>Storage Cost / 1K users</th>
+                      <th>Storage Cost / 10K users</th>
+                      <th>Storage Cost / 100K users</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mediaTable.map((media) => (
+                      <tr key={media.id}>
+                        <td>
+                          <div className="service-name-cell">
+                            {editingCell === `${media.id}-tipo` ? (
+                              <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <input
+                                  type="text"
+                                  value={tempValue}
+                                  onChange={(e) => setTempValue(e.target.value)}
+                                  className="form-input"
+                                  style={{ width: "80px" }}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() =>
+                                    saveEditMedia(media.id, "tipo", tempValue)
+                                  }
+                                  className="edit-btn edit-btn-save"
+                                  style={{ padding: "0.25rem 0.5rem" }}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="edit-btn edit-btn-cancel"
+                                  style={{ padding: "0.25rem 0.5rem" }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <strong
+                                onClick={() =>
+                                  startEditingMedia(
+                                    `${media.id}-tipo`,
+                                    media.tipo,
+                                  )
+                                }
+                                style={{ cursor: "pointer" }}
+                                title="Clicca per modificare"
+                              >
+                                {media.tipo}
+                              </strong>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          {editingCell === `${media.id}-maxPerCustomer` ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "0.25rem",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <input
+                                type="number"
+                                value={tempValue}
+                                onChange={(e) => setTempValue(e.target.value)}
+                                className="form-input"
+                                style={{ width: "60px", textAlign: "center" }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() =>
+                                  saveEditMedia(
+                                    media.id,
+                                    "maxPerCustomer",
+                                    tempValue,
+                                  )
+                                }
+                                className="edit-btn edit-btn-save"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="edit-btn edit-btn-cancel"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() =>
+                                startEditingMedia(
+                                  `${media.id}-maxPerCustomer`,
+                                  media.maxPerCustomer,
+                                )
+                              }
+                              style={{ cursor: "pointer" }}
+                              title="Clicca per modificare"
+                            >
+                              {media.maxPerCustomer}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {editingCell === `${media.id}-duration` ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "0.25rem",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <input
+                                type="text"
+                                value={tempValue}
+                                onChange={(e) => setTempValue(e.target.value)}
+                                className="form-input"
+                                style={{ width: "80px", textAlign: "center" }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() =>
+                                  saveEditMedia(media.id, "duration", tempValue)
+                                }
+                                className="edit-btn edit-btn-save"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="edit-btn edit-btn-cancel"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() =>
+                                startEditingMedia(
+                                  `${media.id}-duration`,
+                                  media.duration,
+                                )
+                              }
+                              style={{ cursor: "pointer" }}
+                              title="Clicca per modificare"
+                            >
+                              {media.duration}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {editingCell === `${media.id}-weightGB` ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "0.25rem",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <input
+                                type="number"
+                                value={tempValue}
+                                onChange={(e) => setTempValue(e.target.value)}
+                                className="form-input"
+                                style={{ width: "80px", textAlign: "center" }}
+                                step="0.000001"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() =>
+                                  saveEditMedia(media.id, "weightGB", tempValue)
+                                }
+                                className="edit-btn edit-btn-save"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="edit-btn edit-btn-cancel"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() =>
+                                startEditingMedia(
+                                  `${media.id}-weightGB`,
+                                  media.weightGB,
+                                )
+                              }
+                              style={{ cursor: "pointer" }}
+                              title="Clicca per modificare"
+                            >
+                              {media.weightGB.toFixed(6)} GB
+                              <br />
+                              <small
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--gray-600)",
+                                }}
+                              >
+                                ({(media.weightGB * 1024).toFixed(2)} MB)
+                              </small>
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span className="cost-badge cost-badge-primary">
+                            €
+                            {calcolaCostoStorage(
+                              media.weightGB,
+                              media.maxPerCustomer,
+                              1000,
+                            ).toFixed(4)}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span className="cost-badge cost-badge-success">
+                            €
+                            {calcolaCostoStorage(
+                              media.weightGB,
+                              media.maxPerCustomer,
+                              10000,
+                            ).toFixed(4)}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span className="cost-badge cost-badge-warning">
+                            €
+                            {calcolaCostoStorage(
+                              media.weightGB,
+                              media.maxPerCustomer,
+                              100000,
+                            ).toFixed(4)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Info Storage */}
+              <div
+                style={{
+                  padding: "1rem",
+                  backgroundColor: "var(--gray-50)",
+                  borderRadius: "var(--border-radius)",
+                  marginTop: "1rem",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>💾</span>
+                  <strong>Informazioni Storage</strong>
+                </div>
+                <p
+                  style={{
+                    margin: "0",
+                    fontSize: "0.875rem",
+                    color: "var(--gray-700)",
+                  }}
+                >
+                  <strong>Costo storage:</strong> $0.021 per gigabyte al mese
+                  <br />
+                  <strong>Formula:</strong> (Weight GB × Max per customer ×
+                  Numero utenti) × $0.021
+                </p>
+              </div>
+
+              {/* Riepilogo Costi Storage per Scenario */}
+              <div
+                style={{
+                  padding: "1rem",
+                  backgroundColor: "var(--white)",
+                  borderRadius: "var(--border-radius)",
+                  marginTop: "1rem",
+                  border: "1px solid var(--gray-200)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>📊</span>
+                  <strong>Riepilogo Costi Storage per Scenario</strong>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                    gap: "1rem",
+                  }}
+                >
+                  {scenariOrdinati.map((scenario) => {
+                    const costoFoto = calcolaCostoStorage(
+                      mediaTable[0].weightGB,
+                      mediaTable[0].maxPerCustomer,
+                      scenario.utenti,
+                    );
+                    const costoAudio = calcolaCostoStorage(
+                      mediaTable[1].weightGB,
+                      mediaTable[1].maxPerCustomer,
+                      scenario.utenti,
+                    );
+                    const costoVideo = calcolaCostoStorage(
+                      mediaTable[2].weightGB,
+                      mediaTable[2].maxPerCustomer,
+                      scenario.utenti,
+                    );
+                    const costoTotal = costoFoto + costoAudio + costoVideo;
+
+                    return (
+                      <div
+                        key={scenario.id}
+                        style={{
+                          padding: "1rem",
+                          backgroundColor: "var(--gray-50)",
+                          borderRadius: "var(--border-radius)",
+                          border: `2px solid ${scenario.colore}20`,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            marginBottom: "0.75rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "12px",
+                              height: "12px",
+                              backgroundColor: scenario.colore,
+                              borderRadius: "50%",
+                            }}
+                          />
+                          <h4
+                            style={{
+                              margin: 0,
+                              fontSize: "1rem",
+                              fontWeight: "600",
+                              color: "var(--gray-800)",
+                            }}
+                          >
+                            {scenario.nome}
+                          </h4>
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: "0.875rem",
+                            color: "var(--gray-700)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: "0.25rem",
+                            }}
+                          >
+                            <span>Foto Storage:</span>
+                            <strong>€{costoFoto.toFixed(6)}</strong>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: "0.25rem",
+                            }}
+                          >
+                            <span>Audio Storage:</span>
+                            <strong>€{costoAudio.toFixed(6)}</strong>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: "0.5rem",
+                            }}
+                          >
+                            <span>Video Storage:</span>
+                            <strong>€{costoVideo.toFixed(6)}</strong>
+                          </div>
+                          <div
+                            style={{
+                              padding: "0.5rem",
+                              backgroundColor: "white",
+                              borderRadius: "var(--border-radius-sm)",
+                              border: `1px solid ${scenario.colore}30`,
+                              textAlign: "center",
+                              fontWeight: "600",
+                              color: scenario.colore,
+                            }}
+                          >
+                            Totale: €{costoTotal.toFixed(6)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Grafici Dinamici */}
@@ -1436,26 +2305,18 @@ export default function DashboardServizi() {
                       <h4>💰 Break-Even Analysis</h4>
                       <div className="metric-row">
                         <span>ARPU Target:</span>
-                        <input
-                          type="number"
-                          placeholder="€50"
-                          className="metric-input"
-                          style={{ width: "80px" }}
-                        />
+                        <span className="metric-value">€50 (fisso)</span>
                       </div>
-                      {scenariOrdinati.map((scenario) => {
-                        const costoPerUtente =
-                          (totaliScenari[scenario.id]?.mensile || 0) /
-                          scenario.utenti;
-                        return (
-                          <div key={scenario.id} className="metric-row">
-                            <span>{scenario.nome} CPU:</span>
-                            <span className="metric-value">
-                              €{costoPerUtente.toFixed(2)}
-                            </span>
-                          </div>
-                        );
-                      })}
+                      <div
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "var(--gray-600)",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        I valori ARPU e CPU sono ora visualizzati direttamente
+                        nelle schede degli scenari sopra.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1657,66 +2518,40 @@ export default function DashboardServizi() {
                 </div>
                 <div className="phase-content">
                   <div className="kpi-grid">
-                    {scenariOrdinati.map((scenario) => {
-                      const costoPerUtente =
-                        (totaliScenari[scenario.id]?.mensile || 0) /
-                        scenario.utenti;
-                      const efficiencyRatio = 50 / costoPerUtente; // Assumendo ARPU €50
-
-                      return (
-                        <div key={scenario.id} className="kpi-card">
-                          <h4>{scenario.nome}</h4>
-                          <div className="kpi-metrics">
-                            <div className="kpi-metric">
-                              <span>Cost per User</span>
-                              <strong
-                                style={{
-                                  color:
-                                    costoPerUtente > 15
-                                      ? "var(--danger-color)"
-                                      : "var(--success-color)",
-                                }}
-                              >
-                                €{costoPerUtente.toFixed(2)}
-                              </strong>
-                            </div>
-                            <div className="kpi-metric">
-                              <span>Efficiency Ratio</span>
-                              <strong
-                                style={{
-                                  color:
-                                    efficiencyRatio > 2
-                                      ? "var(--success-color)"
-                                      : "var(--warning-color)",
-                                }}
-                              >
-                                {efficiencyRatio.toFixed(1)}x
-                              </strong>
-                            </div>
-                            <div className="kpi-metric">
-                              <span>Budget Status</span>
-                              <div
-                                className="status-indicator"
-                                style={{
-                                  backgroundColor:
-                                    costoPerUtente < 10
-                                      ? "var(--success-color)"
-                                      : costoPerUtente < 20
-                                        ? "var(--warning-color)"
-                                        : "var(--danger-color)",
-                                }}
-                              >
-                                {costoPerUtente < 10
-                                  ? "✅ Ottimo"
-                                  : costoPerUtente < 20
-                                    ? "⚠️ Attenzione"
-                                    : "🔴 Critico"}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    <div
+                      style={{
+                        gridColumn: "1 / -1",
+                        textAlign: "center",
+                        padding: "1rem",
+                        backgroundColor: "var(--gray-50)",
+                        borderRadius: "var(--border-radius)",
+                        border: "1px solid var(--gray-200)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "1rem",
+                          fontWeight: "600",
+                          color: "var(--gray-700)",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        📊 KPI Dashboard
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "var(--gray-600)",
+                        }}
+                      >
+                        I valori ARPU, CPU ed Efficiency Ratio sono ora
+                        visualizzati direttamente nelle schede degli scenari
+                        principali sopra.
+                        <br />
+                        Ogni scheda mostra: ARPU Target (€50), Cost Per User
+                        (CPU) e l'Efficiency Ratio calcolato automaticamente.
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
