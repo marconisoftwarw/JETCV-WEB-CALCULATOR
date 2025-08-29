@@ -173,7 +173,7 @@ export default function DashboardServizi() {
   });
 
   // State per parametri di Crossmint
-  const [percentualeUtentiAttivi, setPercentualeUtentiAttivi] = useState(50); // Percentuale degli utenti attivi
+  const [percentualeUtentiAttivi, setPercentualeUtentiAttivi] = useState(5); // Percentuale degli utenti attivi
   const [numeroUpdateMint, setNumeroUpdateMint] = useState(2);
 
   // State per parametri di Veriff(KYC)
@@ -240,6 +240,17 @@ export default function DashboardServizi() {
     [percentualeUtentiAttivi, numeroUpdateMint],
   );
 
+  // Funzione per calcolare il costo di Supabase
+  const calcolaCostoSupabase = useCallback(
+    (numeroUtenti: number) => {
+      // Formula: 30 + (0.20 * utenti attivi al mese)
+      const utentiAttiviEffettivi =
+        (numeroUtenti * percentualeUtentiAttivi) / 100;
+      return 30 + 0.2 * utentiAttiviEffettivi;
+    },
+    [percentualeUtentiAttivi],
+  );
+
   // Scenari ordinati
   const scenariOrdinati = useMemo(
     () => scenariCustom.sort((a, b) => a.ordinamento - b.ordinamento),
@@ -266,6 +277,10 @@ export default function DashboardServizi() {
           if (s.servizio === "Veriff(KYC)") {
             costo = calcolaCostoVeriff(1000);
           }
+          // Applica la formula speciale per Supabase
+          if (s.servizio === "Supabase") {
+            costo = calcolaCostoSupabase(1000);
+          }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
             costo = 8.25; // 99€/anno = 8.25€/mese
@@ -286,6 +301,10 @@ export default function DashboardServizi() {
           if (s.servizio === "Veriff(KYC)") {
             costo = calcolaCostoVeriff(10000);
           }
+          // Applica la formula speciale per Supabase
+          if (s.servizio === "Supabase") {
+            costo = calcolaCostoSupabase(10000);
+          }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
             costo = 8.25; // 99€/anno = 8.25€/mese
@@ -302,9 +321,13 @@ export default function DashboardServizi() {
           if (s.servizio === "Crossmint") {
             costo = calcolaCostoCrossmint(100000);
           }
-          // Applica la formula speciale per Veriff(KYC)
+          // Applica la formula speciale per Veriff(KYC)")
           if (s.servizio === "Veriff(KYC)") {
             costo = calcolaCostoVeriff(100000);
+          }
+          // Applica la formula speciale per Supabase
+          if (s.servizio === "Supabase") {
+            costo = calcolaCostoSupabase(100000);
           }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
@@ -323,9 +346,13 @@ export default function DashboardServizi() {
           if (s.servizio === "Crossmint") {
             costo = calcolaCostoCrossmint(scenario.utenti);
           }
-          // Applica la formula speciale per Veriff(KYC)
+          // Applica la formula speciale per Veriff(KYC)")
           if (s.servizio === "Veriff(KYC)") {
             costo = calcolaCostoVeriff(scenario.utenti);
+          }
+          // Applica la formula speciale per Supabase
+          if (s.servizio === "Supabase") {
+            costo = calcolaCostoSupabase(scenario.utenti);
           }
           // App Store e Play Store hanno costi fissi
           if (s.servizio === "App Store") {
@@ -362,6 +389,7 @@ export default function DashboardServizi() {
     scenariOrdinati,
     calcolaCostoCrossmint,
     calcolaCostoVeriff,
+    calcolaCostoSupabase,
     mediaTable,
   ]);
 
@@ -446,10 +474,31 @@ export default function DashboardServizi() {
 
     // Dati servizi esistenti
     const serviziData = serviziRicorrenti.map((s) => {
-      if (scenario.utenti === 1000) return s.costo1000;
-      if (scenario.utenti === 10000) return s.costo10000;
-      if (scenario.utenti === 100000) return s.costo100000;
-      return Number(s[colonnaKey]) || 0;
+      let costo = 0;
+      if (scenario.utenti === 1000) {
+        costo = s.costo1000 || 0;
+      } else if (scenario.utenti === 10000) {
+        costo = s.costo10000 || 0;
+      } else if (scenario.utenti === 100000) {
+        costo = s.costo100000 || 0;
+      } else {
+        costo = Number(s[colonnaKey]) || 0;
+      }
+
+      // Applica le formule speciali
+      if (s.servizio === "Crossmint") {
+        costo = calcolaCostoCrossmint(scenario.utenti);
+      } else if (s.servizio === "Veriff(KYC)") {
+        costo = calcolaCostoVeriff(scenario.utenti);
+      } else if (s.servizio === "Supabase") {
+        costo = calcolaCostoSupabase(scenario.utenti);
+      } else if (s.servizio === "App Store") {
+        costo = 8.25; // 99€/anno = 8.25€/mese
+      } else if (s.servizio === "Play Store") {
+        costo = 2.08; // 25€ una tantum ammortizzato
+      }
+
+      return costo;
     });
 
     // Dati storage media
@@ -1053,6 +1102,10 @@ export default function DashboardServizi() {
                           if (servizio.servizio === "Veriff(KYC)") {
                             valore = calcolaCostoVeriff(scenario.utenti);
                           }
+                          // Applica la formula speciale per Supabase
+                          if (servizio.servizio === "Supabase") {
+                            valore = calcolaCostoSupabase(scenario.utenti);
+                          }
                           // App Store e Play Store hanno costi fissi
                           if (servizio.servizio === "App Store") {
                             valore = 8.25; // 99€/anno = 8.25€/mese
@@ -1078,6 +1131,7 @@ export default function DashboardServizi() {
                             >
                               {servizio.servizio === "Crossmint" ||
                               servizio.servizio === "Veriff(KYC)" ||
+                              servizio.servizio === "Supabase" ||
                               servizio.servizio === "App Store" ||
                               servizio.servizio === "Play Store" ? (
                                 <span
@@ -1090,7 +1144,8 @@ export default function DashboardServizi() {
                                   }}
                                   title={
                                     servizio.servizio === "Crossmint" ||
-                                    servizio.servizio === "Veriff(KYC)"
+                                    servizio.servizio === "Veriff(KYC)" ||
+                                    servizio.servizio === "Supabase"
                                       ? "Calcolato automaticamente con formula personalizzata"
                                       : "Costo fisso per tutti gli scenari"
                                   }
@@ -1630,7 +1685,7 @@ export default function DashboardServizi() {
                         }
                       }}
                       className="crossmint-input"
-                      placeholder="50"
+                      placeholder="5"
                       min="0"
                       max="100"
                       step="1"
@@ -1680,7 +1735,7 @@ export default function DashboardServizi() {
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
+                          gridTemplateColumns: "repeat(3, 1fr)",
                           gap: "1rem",
                           marginBottom: "1rem",
                         }}
@@ -1742,7 +1797,153 @@ export default function DashboardServizi() {
                             </span>
                           </div>
                         </div>
+                        <div>
+                          <strong
+                            style={{
+                              fontSize: "0.875rem",
+                              color: "var(--gray-700)",
+                            }}
+                          >
+                            Supabase ({percentualeUtentiAttivi}% attivi):
+                          </strong>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.25rem",
+                              marginTop: "0.5rem",
+                            }}
+                          >
+                            <span style={{ fontSize: "0.8rem" }}>
+                              1K: €{calcolaCostoSupabase(1000).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              10K: €{calcolaCostoSupabase(10000).toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              100K: €{calcolaCostoSupabase(100000).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Spiegazione Utenti Attivi */}
+                  <div
+                    style={{
+                      padding: "1rem",
+                      backgroundColor: "rgba(37, 99, 235, 0.05)",
+                      border: "1px solid rgba(37, 99, 235, 0.2)",
+                      borderRadius: "var(--border-radius)",
+                      marginTop: "1rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      <span style={{ fontSize: "1.2rem" }}>ℹ️</span>
+                      <strong style={{ color: "var(--primary-color)" }}>
+                        Spiegazione Utenti Attivi
+                      </strong>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "var(--gray-700)",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      <p style={{ margin: "0 0 0.5rem 0" }}>
+                        <strong>Formula:</strong> Utenti Attivi = Numero Totale
+                        Utenti × (Percentuale Attivi ÷ 100)
+                      </p>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(200px, 1fr))",
+                          gap: "1rem",
+                          marginTop: "0.75rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: "0.75rem",
+                            backgroundColor: "white",
+                            borderRadius: "var(--border-radius-sm)",
+                            border: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <strong>
+                            1K Utenti ({percentualeUtentiAttivi}% attivi):
+                          </strong>
+                          <br />
+                          1,000 × ({percentualeUtentiAttivi} ÷ 100) ={" "}
+                          <strong>
+                            {Math.round(
+                              (1000 * percentualeUtentiAttivi) / 100,
+                            ).toLocaleString()}
+                          </strong>{" "}
+                          utenti attivi
+                        </div>
+                        <div
+                          style={{
+                            padding: "0.75rem",
+                            backgroundColor: "white",
+                            borderRadius: "var(--border-radius-sm)",
+                            border: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <strong>
+                            10K Utenti ({percentualeUtentiAttivi}% attivi):
+                          </strong>
+                          <br />
+                          10,000 × ({percentualeUtentiAttivi} ÷ 100) ={" "}
+                          <strong>
+                            {Math.round(
+                              (10000 * percentualeUtentiAttivi) / 100,
+                            ).toLocaleString()}
+                          </strong>{" "}
+                          utenti attivi
+                        </div>
+                        <div
+                          style={{
+                            padding: "0.75rem",
+                            backgroundColor: "white",
+                            borderRadius: "var(--border-radius-sm)",
+                            border: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <strong>
+                            100K Utenti ({percentualeUtentiAttivi}% attivi):
+                          </strong>
+                          <br />
+                          100,000 × ({percentualeUtentiAttivi} ÷ 100) ={" "}
+                          <strong>
+                            {Math.round(
+                              (100000 * percentualeUtentiAttivi) / 100,
+                            ).toLocaleString()}
+                          </strong>{" "}
+                          utenti attivi
+                        </div>
+                      </div>
+                      <p
+                        style={{
+                          margin: "0.75rem 0 0 0",
+                          fontSize: "0.8rem",
+                          color: "var(--gray-600)",
+                        }}
+                      >
+                        Questi utenti attivi vengono utilizzati per calcolare i
+                        costi di Crossmint e Supabase che dipendono
+                        dall'utilizzo effettivo.
+                      </p>
                     </div>
                   </div>
                 </div>
