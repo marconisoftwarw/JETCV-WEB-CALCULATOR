@@ -51,7 +51,6 @@ interface ScenarioCustom {
   ordinamento: number;
 }
 
-// Colori predefiniti per gli scenari
 const COLORI_SCENARI = [
   "#2563eb", // Blu
   "#059669", // Verde
@@ -403,34 +402,6 @@ export default function DashboardServizi() {
     };
   };
 
-  // Handlers (editing disabilitato)
-  /*
-  const startEditing = (cellId: string, currentValue: string | number) => {
-    setEditingCell(cellId);
-    setTempValue(String(currentValue));
-  };
-
-  const saveEdit = (id: string, field: string, value: string) => {
-    if (field === "servizio") {
-      setServiziRicorrenti((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, servizio: value } : r)),
-      );
-    } else {
-      const numValue = Number(value) || 0;
-      setServiziRicorrenti((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, [field]: numValue } : r)),
-      );
-    }
-    setEditingCell(null);
-    setTempValue("");
-  };
-
-  const cancelEdit = () => {
-    setEditingCell(null);
-    setTempValue("");
-  };
-  */
-
   const addServizio = () => {
     const nuovoServizio: ServizioRow = {
       id: crypto.randomUUID(),
@@ -481,8 +452,6 @@ export default function DashboardServizi() {
         [colonnaKey]: 0,
       })),
     );
-
-    // Reset form
     setNuovoScenario({
       nome: "",
       utenti: 0,
@@ -790,7 +759,7 @@ export default function DashboardServizi() {
                     />
                   </div>
                   <div className="crossmint-input-group">
-                    <label className="crossmint-label">Numero Update</label>
+                    <label className="crossmint-label">Numero update mensili cv</label>
                     <input
                       type="number"
                       value={numeroUpdateMint}
