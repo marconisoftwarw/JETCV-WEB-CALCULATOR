@@ -1113,7 +1113,6 @@ export default function DashboardServizi() {
                           if (servizio.servizio === "Play Store") {
                             valore = 2.08; // 25€ una tantum ammortizzato
                           }
-
                           const badgeClass =
                             index === 0
                               ? "cost-badge-primary"
