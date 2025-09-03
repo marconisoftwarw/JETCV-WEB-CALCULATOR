@@ -1111,7 +1111,7 @@ export default function DashboardServizi() {
                             valore = 8.25; // 99€/anno = 8.25€/mese
                           }
                           if (servizio.servizio === "Play Store") {
-                            valore = 2.08; // 25€ una tantum ammortizzato
+                            valore = 2.08; 
                           }
                           const badgeClass =
                             index === 0
