@@ -186,7 +186,7 @@ export default function DashboardServizi() {
       tipo: "Foto",
       maxPerCustomer: 3,
       duration: "-",
-      weightGB: 0.0000156,
+      weightGB: 0.002, // 2 MB = 0.002 GB
     },
     {
       id: "audio",
