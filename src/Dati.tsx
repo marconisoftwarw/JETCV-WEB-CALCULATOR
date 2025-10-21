@@ -1953,10 +1953,7 @@ export default function DashboardServizi() {
             <div className="table-section">
               <div className="table-header">
                 <h2 className="table-title">📱 Tabella Specifiche Media</h2>
-                <p className="table-description">
-                  Gestisci specifiche per foto, audio e video. Clicca per
-                  modificare.
-                </p>
+             
               </div>
 
               <div className="table-container">
