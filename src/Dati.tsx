@@ -192,15 +192,22 @@ export default function DashboardServizi() {
       id: "audio",
       tipo: "Audio",
       maxPerCustomer: 1,
-      duration: "45 sec",
+      duration: "30 sec",
       weightGB: 0.00244,
     },
     {
       id: "video",
       tipo: "Video",
       maxPerCustomer: 1,
-      duration: "30 sec",
+      duration: "15 sec",
       weightGB: 0.00244,
+    },
+    {
+      id: "documenti",
+      tipo: "Documenti",
+      maxPerCustomer: 3,
+      duration: "-",
+      weightGB: 0.001, // 1 MB = 0.001 GB
     },
   ]);
 
@@ -1305,7 +1312,7 @@ export default function DashboardServizi() {
                                 borderColor: scenario.colore + "40",
                                 cursor: "default",
                               }}
-                              title={`Foto: €${calcolaCostoStorage(mediaTable[0].weightGB, mediaTable[0].maxPerCustomer, scenario.utenti).toFixed(4)} | Audio: €${calcolaCostoStorage(mediaTable[1].weightGB, mediaTable[1].maxPerCustomer, scenario.utenti).toFixed(4)} | Video: €${calcolaCostoStorage(mediaTable[2].weightGB, mediaTable[2].maxPerCustomer, scenario.utenti).toFixed(4)}`}
+                              title={`Foto: €${calcolaCostoStorage(mediaTable[0].weightGB, mediaTable[0].maxPerCustomer, scenario.utenti).toFixed(4)} | Audio: €${calcolaCostoStorage(mediaTable[1].weightGB, mediaTable[1].maxPerCustomer, scenario.utenti).toFixed(4)} | Video: €${calcolaCostoStorage(mediaTable[2].weightGB, mediaTable[2].maxPerCustomer, scenario.utenti).toFixed(4)} | Documenti: €${calcolaCostoStorage(mediaTable[3].weightGB, mediaTable[3].maxPerCustomer, scenario.utenti).toFixed(4)}`}
                             >
                               €{costoStorageMedia.toFixed(4)}
                             </span>
@@ -2311,7 +2318,12 @@ export default function DashboardServizi() {
                       mediaTable[2].maxPerCustomer,
                       scenario.utenti,
                     );
-                    const costoTotal = costoFoto + costoAudio + costoVideo;
+                    const costoDocumenti = calcolaCostoStorage(
+                      mediaTable[3].weightGB,
+                      mediaTable[3].maxPerCustomer,
+                      scenario.utenti,
+                    );
+                    const costoTotal = costoFoto + costoAudio + costoVideo + costoDocumenti;
 
                     return (
                       <div
@@ -2381,11 +2393,21 @@ export default function DashboardServizi() {
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
-                              marginBottom: "0.5rem",
+                              marginBottom: "0.25rem",
                             }}
                           >
                             <span>Video Storage:</span>
                             <strong>€{costoVideo.toFixed(6)}</strong>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: "0.5rem",
+                            }}
+                          >
+                            <span>Documenti Storage:</span>
+                            <strong>€{costoDocumenti.toFixed(6)}</strong>
                           </div>
                           <div
                             style={{
