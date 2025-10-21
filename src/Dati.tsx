@@ -186,28 +186,28 @@ export default function DashboardServizi() {
       tipo: "Foto",
       maxPerCustomer: 3,
       duration: "-",
-      weightGB: 0.002, // 2 MB = 0.002 GB
+      weightGB: 0.005, // 5 MB = 0.005 GB
     },
     {
       id: "audio",
       tipo: "Audio",
       maxPerCustomer: 1,
       duration: "30 sec",
-      weightGB: 0.00244,
+      weightGB: 0.03, // 1 MB/sec × 30 sec = 30 MB = 0.03 GB
     },
     {
       id: "video",
       tipo: "Video",
       maxPerCustomer: 1,
       duration: "15 sec",
-      weightGB: 0.00244,
+      weightGB: 0.03, // 2 MB/sec × 15 sec = 30 MB = 0.03 GB
     },
     {
       id: "documenti",
       tipo: "Documenti",
       maxPerCustomer: 3,
       duration: "-",
-      weightGB: 0.001, // 1 MB = 0.001 GB
+      weightGB: 0.01, // 10 MB = 0.01 GB
     },
   ]);
 
@@ -237,12 +237,12 @@ export default function DashboardServizi() {
   // Funzione per calcolare il costo di Crossmint
   const calcolaCostoCrossmint = useCallback(
     (numeroUtenti: number) => {
-      // Formula: ((numeroutenti*0.10) /12)+ (utentiAttivi% * numeroUtenti * 0.05 * numeroUpdateMint)
-      const costoFisso = (numeroUtenti * 0.1) / 12;
-      const utentiAttiviEffettivi =
-        (numeroUtenti * percentualeUtentiAttivi) / 100;
-      const costoVariabile = utentiAttiviEffettivi * 0.05 * numeroUpdateMint;
-      return costoFisso + costoVariabile;
+    // Formula: ((numeroutenti*0.10) /12)+ (utentiAttivi% * numeroUtenti * 0.05 * numeroUpdateMint)
+    const costoFisso = (numeroUtenti * 0.1) / 12;
+    const utentiAttiviEffettivi =
+      (numeroUtenti * percentualeUtentiAttivi) / 100;
+    const costoVariabile = utentiAttiviEffettivi * 0.05 * numeroUpdateMint;
+    return costoFisso + costoVariabile;
     },
     [percentualeUtentiAttivi, numeroUpdateMint],
   );
@@ -816,35 +816,35 @@ export default function DashboardServizi() {
               const efficiencyRatio = arpuTarget / costoPerUtente;
 
               return (
-                <div key={scenario.id} className="stat-card">
-                  <div className="stat-card-content">
-                    <div className="stat-card-header">
-                      <div
-                        className="stat-icon"
-                        style={{
-                          backgroundColor: scenario.colore + "20",
-                          color: scenario.colore,
-                        }}
-                      >
-                        {index === 0 ? (
-                          <Users size={24} />
-                        ) : index === 1 ? (
-                          <TrendingUp size={24} />
-                        ) : (
-                          <DollarSign size={24} />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="stat-title">{scenario.nome}</h3>
-                        <div className="stat-value">
-                          €
+              <div key={scenario.id} className="stat-card">
+                <div className="stat-card-content">
+                  <div className="stat-card-header">
+                    <div
+                      className="stat-icon"
+                      style={{
+                        backgroundColor: scenario.colore + "20",
+                        color: scenario.colore,
+                      }}
+                    >
+                      {index === 0 ? (
+                        <Users size={24} />
+                      ) : index === 1 ? (
+                        <TrendingUp size={24} />
+                      ) : (
+                        <DollarSign size={24} />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="stat-title">{scenario.nome}</h3>
+                      <div className="stat-value">
+                        €
                           {totaliScenari[
                             scenario.id
                           ]?.mensile.toLocaleString() || "0"}
-                          /MESE
-                        </div>
+                        /MESE
                       </div>
                     </div>
+                  </div>
 
                     {/* Nuova sezione per ARPU e CPU */}
                     <div
@@ -955,44 +955,573 @@ export default function DashboardServizi() {
                             : efficiencyRatio > 1
                               ? "⚠️ Attenzione"
                               : "🔴 Critico"}
-                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="stat-footer">
-                    <div className="stat-footer-text">
-                      <span className="stat-highlight">
-                        {scenario.utenti.toLocaleString()} utenti
-                      </span>{" "}
-                      • €
-                      {totaliScenari[scenario.id]?.annuale.toLocaleString() ||
-                        "0"}{" "}
-                      all'anno
-                      {![1000, 10000, 100000].includes(scenario.utenti) && (
-                        <button
-                          onClick={() => removeScenario(scenario.id)}
-                          style={{
-                            marginLeft: "0.5rem",
-                            color: "var(--danger-color)",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: "0.75rem",
-                          }}
-                          title="Rimuovi scenario"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
+                </div>
+                <div className="stat-footer">
+                  <div className="stat-footer-text">
+                    <span className="stat-highlight">
+                      {scenario.utenti.toLocaleString()} utenti
+                    </span>{" "}
+                    • €
+                    {totaliScenari[scenario.id]?.annuale.toLocaleString() ||
+                      "0"}{" "}
+                    all'anno
+                    {![1000, 10000, 100000].includes(scenario.utenti) && (
+                      <button
+                        onClick={() => removeScenario(scenario.id)}
+                        style={{
+                          marginLeft: "0.5rem",
+                          color: "var(--danger-color)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                        }}
+                        title="Rimuovi scenario"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
+              </div>
               );
             })}
           </div>
 
           {/* Layout principale */}
           <div className="main-layout">
+            {/* Tabella Specifiche Media - SPOSTATA SOPRA */}
+            <div className="table-section">
+              <div className="table-header">
+                <h2 className="table-title">📱 Tabella Specifiche Media</h2>
+                <p className="table-description">
+                  Gestisci specifiche per foto, audio, video e documenti. Clicca per modificare.
+                </p>
+              </div>
+
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Media Type</th>
+                      <th>N° max / customer</th>
+                      <th>Duration</th>
+                      <th>Weight (GB)</th>
+                      <th>Storage Cost / 1K users</th>
+                      <th>Storage Cost / 10K users</th>
+                      <th>Storage Cost / 100K users</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mediaTable.map((media) => (
+                      <tr key={media.id}>
+                        <td>
+                          <div className="service-name-cell">
+                            {editingCell === `${media.id}-tipo` ? (
+                              <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <input
+                                  type="text"
+                                  value={tempValue}
+                                  onChange={(e) => setTempValue(e.target.value)}
+                                  className="form-input"
+                                  style={{ width: "80px" }}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() =>
+                                    saveEditMedia(media.id, "tipo", tempValue)
+                                  }
+                                  className="edit-btn edit-btn-save"
+                                  style={{ padding: "0.25rem 0.5rem" }}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="edit-btn edit-btn-cancel"
+                                  style={{ padding: "0.25rem 0.5rem" }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <strong
+                                onClick={() =>
+                                  startEditingMedia(
+                                    `${media.id}-tipo`,
+                                    media.tipo,
+                                  )
+                                }
+                                style={{ cursor: "pointer" }}
+                                title="Clicca per modificare"
+                              >
+                                {media.tipo}
+                              </strong>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          {editingCell === `${media.id}-maxPerCustomer` ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "0.25rem",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <input
+                                type="number"
+                                value={tempValue}
+                                onChange={(e) => setTempValue(e.target.value)}
+                                className="form-input"
+                                style={{ width: "60px", textAlign: "center" }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() =>
+                                  saveEditMedia(
+                                    media.id,
+                                    "maxPerCustomer",
+                                    tempValue,
+                                  )
+                                }
+                                className="edit-btn edit-btn-save"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="edit-btn edit-btn-cancel"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() =>
+                                startEditingMedia(
+                                  `${media.id}-maxPerCustomer`,
+                                  media.maxPerCustomer,
+                                )
+                              }
+                              style={{ cursor: "pointer" }}
+                              title="Clicca per modificare"
+                            >
+                              {media.maxPerCustomer}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {editingCell === `${media.id}-duration` ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "0.25rem",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <input
+                                type="text"
+                                value={tempValue}
+                                onChange={(e) => setTempValue(e.target.value)}
+                                className="form-input"
+                                style={{ width: "80px", textAlign: "center" }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() =>
+                                  saveEditMedia(media.id, "duration", tempValue)
+                                }
+                                className="edit-btn edit-btn-save"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="edit-btn edit-btn-cancel"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() =>
+                                startEditingMedia(
+                                  `${media.id}-duration`,
+                                  media.duration,
+                                )
+                              }
+                              style={{ cursor: "pointer" }}
+                              title="Clicca per modificare"
+                            >
+                              {media.duration}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {editingCell === `${media.id}-weightGB` ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "0.25rem",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <input
+                                type="number"
+                                value={tempValue}
+                                onChange={(e) => setTempValue(e.target.value)}
+                                className="form-input"
+                                style={{ width: "80px", textAlign: "center" }}
+                                step="0.000001"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() =>
+                                  saveEditMedia(media.id, "weightGB", tempValue)
+                                }
+                                className="edit-btn edit-btn-save"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="edit-btn edit-btn-cancel"
+                                style={{
+                                  padding: "0.25rem 0.25rem",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() =>
+                                startEditingMedia(
+                                  `${media.id}-weightGB`,
+                                  media.weightGB,
+                                )
+                              }
+                              style={{ cursor: "pointer" }}
+                              title="Clicca per modificare"
+                            >
+                              {media.weightGB.toFixed(6)} GB
+                              <br />
+                              <small
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--gray-600)",
+                                }}
+                              >
+                                ({(media.weightGB * 1024).toFixed(2)} MB)
+                              </small>
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span className="cost-badge cost-badge-primary">
+                            €
+                            {calcolaCostoStorage(
+                              media.weightGB,
+                              media.maxPerCustomer,
+                              1000,
+                            ).toFixed(4)}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span className="cost-badge cost-badge-success">
+                            €
+                            {calcolaCostoStorage(
+                              media.weightGB,
+                              media.maxPerCustomer,
+                              10000,
+                            ).toFixed(4)}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <span className="cost-badge cost-badge-warning">
+                            €
+                            {calcolaCostoStorage(
+                              media.weightGB,
+                              media.maxPerCustomer,
+                              100000,
+                            ).toFixed(4)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Info Storage */}
+              <div
+                style={{
+                  padding: "1rem",
+                  backgroundColor: "var(--gray-50)",
+                  borderRadius: "var(--border-radius)",
+                  marginTop: "0.5rem",
+                }}
+              >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    marginBottom: "0.5rem",
+                    }}
+                  >
+                  <span style={{ fontSize: "1.2rem" }}>💾</span>
+                  <strong>Informazioni Storage</strong>
+                  </div>
+                  <p
+                    style={{
+                    margin: "0",
+                    fontSize: "0.875rem",
+                      color: "var(--gray-700)",
+                  }}
+                >
+                  <strong>Costo storage:</strong> $0.021 per gigabyte al mese
+                  <br />
+                  <strong>Formula:</strong> (Weight GB × Max per customer ×
+                  Numero utenti) × $0.021
+                </p>
+              </div>
+                </div>
+
+            {/* Riepilogo Costi Storage per Scenario - IN FULL WIDTH TRA LE DUE TABELLE */}
+            <div
+              style={{
+                padding: "1rem",
+                backgroundColor: "var(--white)",
+                borderRadius: "0",
+                marginTop: "0",
+                marginBottom: "0",
+                border: "2px solid var(--gray-200)",
+                borderTop: "none",
+                borderBottom: "none",
+                boxShadow: "none",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                <span style={{ fontSize: "1.25rem" }}>📊</span>
+                <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "700", color: "var(--gray-900)" }}>
+                  Riepilogo Costi Storage per Scenario
+                </h2>
+              </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                          gap: "1rem",
+                }}
+              >
+                {scenariOrdinati.map((scenario) => {
+                  const costoFoto = calcolaCostoStorage(
+                    mediaTable[0].weightGB,
+                    mediaTable[0].maxPerCustomer,
+                    scenario.utenti,
+                  );
+                  const costoAudio = calcolaCostoStorage(
+                    mediaTable[1].weightGB,
+                    mediaTable[1].maxPerCustomer,
+                    scenario.utenti,
+                  );
+                  const costoVideo = calcolaCostoStorage(
+                    mediaTable[2].weightGB,
+                    mediaTable[2].maxPerCustomer,
+                    scenario.utenti,
+                  );
+                  const costoDocumenti = calcolaCostoStorage(
+                    mediaTable[3].weightGB,
+                    mediaTable[3].maxPerCustomer,
+                    scenario.utenti,
+                  );
+                  const costoTotal =
+                    costoFoto + costoAudio + costoVideo + costoDocumenti;
+
+                  return (
+                    <div
+                      key={scenario.id}
+                            style={{
+                        padding: "1rem",
+                        backgroundColor: "var(--gray-50)",
+                        borderRadius: "var(--border-radius)",
+                        border: `2px solid ${scenario.colore}40`,
+                        boxShadow: "var(--shadow)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginBottom: "0.75rem",
+                        }}
+                      >
+                        <div
+                            style={{
+                            width: "16px",
+                            height: "16px",
+                            backgroundColor: scenario.colore,
+                            borderRadius: "50%",
+                          }}
+                        />
+                        <h4
+                          style={{
+                            margin: 0,
+                            fontSize: "1.125rem",
+                            fontWeight: "700",
+                            color: scenario.colore,
+                          }}
+                        >
+                          {scenario.nome}
+                        </h4>
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "0.9rem",
+                              color: "var(--gray-700)",
+                            }}
+                          >
+                          <div
+                            style={{
+                              display: "flex",
+                            justifyContent: "space-between",
+                            marginBottom: "0.35rem",
+                            paddingBottom: "0.35rem",
+                            borderBottom: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <span>📷 Foto Storage:</span>
+                          <strong>€{costoFoto.toFixed(4)}</strong>
+                          </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            marginBottom: "0.35rem",
+                            paddingBottom: "0.35rem",
+                            borderBottom: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <span>🎵 Audio Storage:</span>
+                          <strong>€{costoAudio.toFixed(4)}</strong>
+                        </div>
+                        <div
+                            style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            marginBottom: "0.35rem",
+                            paddingBottom: "0.35rem",
+                            borderBottom: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <span>🎬 Video Storage:</span>
+                          <strong>€{costoVideo.toFixed(4)}</strong>
+                        </div>
+                          <div
+                            style={{
+                              display: "flex",
+                            justifyContent: "space-between",
+                            marginBottom: "0.5rem",
+                            paddingBottom: "0.35rem",
+                            borderBottom: "1px solid var(--gray-200)",
+                          }}
+                        >
+                          <span>📄 Documenti Storage:</span>
+                          <strong>€{costoDocumenti.toFixed(4)}</strong>
+                          </div>
+                        <div
+                          style={{
+                            padding: "0.75rem",
+                            backgroundColor: scenario.colore + "10",
+                            borderRadius: "var(--border-radius)",
+                            border: `2px solid ${scenario.colore}40`,
+                            textAlign: "center",
+                            fontWeight: "700",
+                            fontSize: "1.125rem",
+                            color: scenario.colore,
+                          }}
+                        >
+                          💰 Totale: €{costoTotal.toFixed(4)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                  </div>
+
+              {/* Info Storage */}
+              <div
+                style={{
+                  padding: "1rem",
+                  backgroundColor: "rgba(37, 99, 235, 0.05)",
+                  border: "1px solid rgba(37, 99, 235, 0.2)",
+                  borderRadius: "var(--border-radius)",
+                  marginTop: "1rem",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>💾</span>
+                  <strong style={{ color: "var(--primary-color)" }}>Informazioni Storage</strong>
+                </div>
+                <p
+                  style={{
+                    margin: "0",
+                    fontSize: "0.875rem",
+                    color: "var(--gray-700)",
+                  }}
+                >
+                  <strong>Costo storage:</strong> $0.021 per gigabyte al mese
+                  <br />
+                  <strong>Formula:</strong> (Weight GB × Max per customer × Numero utenti) × $0.021
+                  <br />
+                  <strong>Nota:</strong> Tutti i costi storage sono inclusi nei totali delle tabelle sottostanti.
+                </p>
+              </div>
+            </div>
+
             {/* Tabella Editabile Dinamica */}
             <div className="table-section">
               <div className="table-header">
@@ -1118,7 +1647,7 @@ export default function DashboardServizi() {
                             valore = 8.25; // 99€/anno = 8.25€/mese
                           }
                           if (servizio.servizio === "Play Store") {
-                            valore = 2.08; 
+                            valore = 2.08;
                           }
                           const badgeClass =
                             index === 0
@@ -1208,16 +1737,16 @@ export default function DashboardServizi() {
                                         ✕
                                       </button>
                                     </div>
-                                  ) : (
-                                    <span
-                                      className={`cost-badge ${badgeClass}`}
-                                      style={{
-                                        backgroundColor: scenario.colore + "20",
-                                        color: scenario.colore,
-                                        borderColor: scenario.colore + "40",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "0.25rem",
+                              ) : (
+                                <span
+                                  className={`cost-badge ${badgeClass}`}
+                                  style={{
+                                    backgroundColor: scenario.colore + "20",
+                                    color: scenario.colore,
+                                    borderColor: scenario.colore + "40",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
                                         cursor: "pointer",
                                       }}
                                       onClick={() =>
@@ -1227,21 +1756,21 @@ export default function DashboardServizi() {
                                         )
                                       }
                                       title="Clicca per modificare"
-                                    >
-                                      €{valore.toLocaleString()}
-                                      {servizio.servizio === "AWS EC2" &&
-                                        scenario.utenti === 100000 && (
-                                          <span
-                                            style={{
-                                              fontSize: "0.75rem",
-                                              color: "var(--warning-color)",
-                                              fontWeight: "bold",
-                                            }}
-                                          >
-                                            ⚠️
-                                          </span>
-                                        )}
-                                    </span>
+                                >
+                                  €{valore.toLocaleString()}
+                                  {servizio.servizio === "AWS EC2" &&
+                                    scenario.utenti === 100000 && (
+                                      <span
+                                        style={{
+                                          fontSize: "0.75rem",
+                                          color: "var(--warning-color)",
+                                          fontWeight: "bold",
+                                        }}
+                                      >
+                                        ⚠️
+                                      </span>
+                                    )}
+                                </span>
                                   )}
                                 </div>
                               )}
@@ -1956,480 +2485,6 @@ export default function DashboardServizi() {
               </div>
             </div>
 
-            {/* Nuova Tabella Media */}
-            <div className="table-section">
-              <div className="table-header">
-                <h2 className="table-title">📱 Tabella Specifiche Media</h2>
-             
-              </div>
-
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Media Type</th>
-                      <th>N° max / customer</th>
-                      <th>Duration</th>
-                      <th>Weight (GB)</th>
-                      <th>Storage Cost / 1K users</th>
-                      <th>Storage Cost / 10K users</th>
-                      <th>Storage Cost / 100K users</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mediaTable.map((media) => (
-                      <tr key={media.id}>
-                        <td>
-                          <div className="service-name-cell">
-                            {editingCell === `${media.id}-tipo` ? (
-                              <div style={{ display: "flex", gap: "0.5rem" }}>
-                                <input
-                                  type="text"
-                                  value={tempValue}
-                                  onChange={(e) => setTempValue(e.target.value)}
-                                  className="form-input"
-                                  style={{ width: "80px" }}
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() =>
-                                    saveEditMedia(media.id, "tipo", tempValue)
-                                  }
-                                  className="edit-btn edit-btn-save"
-                                  style={{ padding: "0.25rem 0.5rem" }}
-                                >
-                                  ✓
-                                </button>
-                                <button
-                                  onClick={cancelEdit}
-                                  className="edit-btn edit-btn-cancel"
-                                  style={{ padding: "0.25rem 0.5rem" }}
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ) : (
-                              <strong
-                                onClick={() =>
-                                  startEditingMedia(
-                                    `${media.id}-tipo`,
-                                    media.tipo,
-                                  )
-                                }
-                                style={{ cursor: "pointer" }}
-                                title="Clicca per modificare"
-                              >
-                                {media.tipo}
-                              </strong>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          {editingCell === `${media.id}-maxPerCustomer` ? (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "0.25rem",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <input
-                                type="number"
-                                value={tempValue}
-                                onChange={(e) => setTempValue(e.target.value)}
-                                className="form-input"
-                                style={{ width: "60px", textAlign: "center" }}
-                                autoFocus
-                              />
-                              <button
-                                onClick={() =>
-                                  saveEditMedia(
-                                    media.id,
-                                    "maxPerCustomer",
-                                    tempValue,
-                                  )
-                                }
-                                className="edit-btn edit-btn-save"
-                                style={{
-                                  padding: "0.25rem 0.25rem",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="edit-btn edit-btn-cancel"
-                                style={{
-                                  padding: "0.25rem 0.25rem",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
-                            <span
-                              onClick={() =>
-                                startEditingMedia(
-                                  `${media.id}-maxPerCustomer`,
-                                  media.maxPerCustomer,
-                                )
-                              }
-                              style={{ cursor: "pointer" }}
-                              title="Clicca per modificare"
-                            >
-                              {media.maxPerCustomer}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          {editingCell === `${media.id}-duration` ? (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "0.25rem",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <input
-                                type="text"
-                                value={tempValue}
-                                onChange={(e) => setTempValue(e.target.value)}
-                                className="form-input"
-                                style={{ width: "80px", textAlign: "center" }}
-                                autoFocus
-                              />
-                              <button
-                                onClick={() =>
-                                  saveEditMedia(media.id, "duration", tempValue)
-                                }
-                                className="edit-btn edit-btn-save"
-                                style={{
-                                  padding: "0.25rem 0.25rem",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="edit-btn edit-btn-cancel"
-                                style={{
-                                  padding: "0.25rem 0.25rem",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
-                            <span
-                              onClick={() =>
-                                startEditingMedia(
-                                  `${media.id}-duration`,
-                                  media.duration,
-                                )
-                              }
-                              style={{ cursor: "pointer" }}
-                              title="Clicca per modificare"
-                            >
-                              {media.duration}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          {editingCell === `${media.id}-weightGB` ? (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "0.25rem",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <input
-                                type="number"
-                                value={tempValue}
-                                onChange={(e) => setTempValue(e.target.value)}
-                                className="form-input"
-                                style={{ width: "80px", textAlign: "center" }}
-                                step="0.000001"
-                                autoFocus
-                              />
-                              <button
-                                onClick={() =>
-                                  saveEditMedia(media.id, "weightGB", tempValue)
-                                }
-                                className="edit-btn edit-btn-save"
-                                style={{
-                                  padding: "0.25rem 0.25rem",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="edit-btn edit-btn-cancel"
-                                style={{
-                                  padding: "0.25rem 0.25rem",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
-                            <span
-                              onClick={() =>
-                                startEditingMedia(
-                                  `${media.id}-weightGB`,
-                                  media.weightGB,
-                                )
-                              }
-                              style={{ cursor: "pointer" }}
-                              title="Clicca per modificare"
-                            >
-                              {media.weightGB.toFixed(6)} GB
-                              <br />
-                              <small
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "var(--gray-600)",
-                                }}
-                              >
-                                ({(media.weightGB * 1024).toFixed(2)} MB)
-                              </small>
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ textAlign: "center" }}>
-                          <span className="cost-badge cost-badge-primary">
-                            €
-                            {calcolaCostoStorage(
-                              media.weightGB,
-                              media.maxPerCustomer,
-                              1000,
-                            ).toFixed(4)}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: "center" }}>
-                          <span className="cost-badge cost-badge-success">
-                            €
-                            {calcolaCostoStorage(
-                              media.weightGB,
-                              media.maxPerCustomer,
-                              10000,
-                            ).toFixed(4)}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: "center" }}>
-                          <span className="cost-badge cost-badge-warning">
-                            €
-                            {calcolaCostoStorage(
-                              media.weightGB,
-                              media.maxPerCustomer,
-                              100000,
-                            ).toFixed(4)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Info Storage */}
-              <div
-                style={{
-                  padding: "1rem",
-                  backgroundColor: "var(--gray-50)",
-                  borderRadius: "var(--border-radius)",
-                  marginTop: "1rem",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  <span style={{ fontSize: "1.2rem" }}>💾</span>
-                  <strong>Informazioni Storage</strong>
-                </div>
-                <p
-                  style={{
-                    margin: "0",
-                    fontSize: "0.875rem",
-                    color: "var(--gray-700)",
-                  }}
-                >
-                  <strong>Costo storage:</strong> $0.021 per gigabyte al mese
-                  <br />
-                  <strong>Formula:</strong> (Weight GB × Max per customer ×
-                  Numero utenti) × $0.021
-                </p>
-              </div>
-
-              {/* Riepilogo Costi Storage per Scenario */}
-              <div
-                style={{
-                  padding: "1rem",
-                  backgroundColor: "var(--white)",
-                  borderRadius: "var(--border-radius)",
-                  marginTop: "1rem",
-                  border: "1px solid var(--gray-200)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  <span style={{ fontSize: "1.2rem" }}>📊</span>
-                  <strong>Riepilogo Costi Storage per Scenario</strong>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                    gap: "1rem",
-                  }}
-                >
-                  {scenariOrdinati.map((scenario) => {
-                    const costoFoto = calcolaCostoStorage(
-                      mediaTable[0].weightGB,
-                      mediaTable[0].maxPerCustomer,
-                      scenario.utenti,
-                    );
-                    const costoAudio = calcolaCostoStorage(
-                      mediaTable[1].weightGB,
-                      mediaTable[1].maxPerCustomer,
-                      scenario.utenti,
-                    );
-                    const costoVideo = calcolaCostoStorage(
-                      mediaTable[2].weightGB,
-                      mediaTable[2].maxPerCustomer,
-                      scenario.utenti,
-                    );
-                    const costoDocumenti = calcolaCostoStorage(
-                      mediaTable[3].weightGB,
-                      mediaTable[3].maxPerCustomer,
-                      scenario.utenti,
-                    );
-                    const costoTotal = costoFoto + costoAudio + costoVideo + costoDocumenti;
-
-                    return (
-                      <div
-                        key={scenario.id}
-                        style={{
-                          padding: "1rem",
-                          backgroundColor: "var(--gray-50)",
-                          borderRadius: "var(--border-radius)",
-                          border: `2px solid ${scenario.colore}20`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                            marginBottom: "0.75rem",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "12px",
-                              height: "12px",
-                              backgroundColor: scenario.colore,
-                              borderRadius: "50%",
-                            }}
-                          />
-                          <h4
-                            style={{
-                              margin: 0,
-                              fontSize: "1rem",
-                              fontWeight: "600",
-                              color: "var(--gray-800)",
-                            }}
-                          >
-                            {scenario.nome}
-                          </h4>
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "0.875rem",
-                            color: "var(--gray-700)",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              marginBottom: "0.25rem",
-                            }}
-                          >
-                            <span>Foto Storage:</span>
-                            <strong>€{costoFoto.toFixed(6)}</strong>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              marginBottom: "0.25rem",
-                            }}
-                          >
-                            <span>Audio Storage:</span>
-                            <strong>€{costoAudio.toFixed(6)}</strong>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              marginBottom: "0.25rem",
-                            }}
-                          >
-                            <span>Video Storage:</span>
-                            <strong>€{costoVideo.toFixed(6)}</strong>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              marginBottom: "0.5rem",
-                            }}
-                          >
-                            <span>Documenti Storage:</span>
-                            <strong>€{costoDocumenti.toFixed(6)}</strong>
-                          </div>
-                          <div
-                            style={{
-                              padding: "0.5rem",
-                              backgroundColor: "white",
-                              borderRadius: "var(--border-radius-sm)",
-                              border: `1px solid ${scenario.colore}30`,
-                              textAlign: "center",
-                              fontWeight: "600",
-                              color: scenario.colore,
-                            }}
-                          >
-                            Totale: €{costoTotal.toFixed(6)}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
             {/* Grafici Dinamici */}
             <div className="charts-section">
               {scenariOrdinati.map((scenario) => (
@@ -2535,7 +2590,7 @@ export default function DashboardServizi() {
                       >
                         I valori ARPU e CPU sono ora visualizzati direttamente
                         nelle schede degli scenari sopra.
-                      </div>
+                          </div>
                     </div>
                   </div>
                 </div>
@@ -2738,7 +2793,7 @@ export default function DashboardServizi() {
                 <div className="phase-content">
                   <div className="kpi-grid">
                     <div
-                      style={{
+                                style={{
                         gridColumn: "1 / -1",
                         textAlign: "center",
                         padding: "1rem",
@@ -2748,7 +2803,7 @@ export default function DashboardServizi() {
                       }}
                     >
                       <div
-                        style={{
+                                style={{
                           fontSize: "1rem",
                           fontWeight: "600",
                           color: "var(--gray-700)",
@@ -2756,9 +2811,9 @@ export default function DashboardServizi() {
                         }}
                       >
                         📊 KPI Dashboard
-                      </div>
-                      <div
-                        style={{
+                            </div>
+                              <div
+                                style={{
                           fontSize: "0.875rem",
                           color: "var(--gray-600)",
                         }}
@@ -2769,8 +2824,8 @@ export default function DashboardServizi() {
                         <br />
                         Ogni scheda mostra: ARPU Target (€50), Cost Per User
                         (CPU) e l'Efficiency Ratio calcolato automaticamente.
-                      </div>
-                    </div>
+                              </div>
+                            </div>
                   </div>
                 </div>
               </div>
