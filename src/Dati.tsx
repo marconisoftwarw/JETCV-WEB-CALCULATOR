@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -17,7 +17,6 @@ import {
   TrendingUp,
   DollarSign,
   Users,
-  Settings,
   PlusCircle,
 } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -112,13 +111,6 @@ const SERVIZI_RICORRENTI: ServizioRow[] = [
   },
   {
     id: crypto.randomUUID(),
-    servizio: "FlutterFlow",
-    costo1000: 50,
-    costo10000: 50,
-    costo100000: 50,
-  },
-  {
-    id: crypto.randomUUID(),
     servizio: "App Store",
     costo1000: 8.25, // 99€/anno = 8.25€/mese
     costo10000: 8.25,
@@ -158,6 +150,14 @@ const SCENARI_DEFAULT: ScenarioCustom[] = [
   },
 ];
 
+// Funzione helper per formattare valori con virgola e max 2 decimali
+const formatCurrency = (value: number, decimals: number = 2): string => {
+  return value.toLocaleString('it-IT', { 
+    minimumFractionDigits: decimals, 
+    maximumFractionDigits: decimals 
+  });
+};
+
 export default function DashboardServizi() {
   const [serviziRicorrenti, setServiziRicorrenti] =
     useState<ServizioRow[]>(SERVIZI_RICORRENTI);
@@ -171,6 +171,22 @@ export default function DashboardServizi() {
     utenti: 0,
     colore: COLORI_SCENARI[3],
   });
+
+  // State per responsive design
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+
+  // Gestione responsive
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // State per parametri di Crossmint
   const [percentualeUtentiAttivi, setPercentualeUtentiAttivi] = useState(5); // Percentuale degli utenti attivi
@@ -211,15 +227,17 @@ export default function DashboardServizi() {
     },
   ]);
 
-  // Calcola costo storage per tipo media
+  // Calcola costo storage per tipo media (Supabase file storage)
   const calcolaCostoStorage = (
     weightGB: number,
     maxPerCustomer: number,
-    utenti: number,
+    utentiTotali: number,
   ) => {
+    // Formula: (N° media × Weight × Utenti Totali) × $0.021/GB
+    // Es: 3 foto × 5MB (0.005GB) × 1000 utenti = 15GB × $0.021 = $0.315
     const storagePerUtente = weightGB * maxPerCustomer;
-    const storageTotale = storagePerUtente * utenti;
-    const costoStorage = storageTotale * 0.021; // $0.021 per GB
+    const storageTotaleGB = storagePerUtente * utentiTotali;
+    const costoStorage = storageTotaleGB * 0.021; // $0.021 per GB (Supabase file storage)
     return costoStorage;
   };
 
@@ -425,7 +443,7 @@ export default function DashboardServizi() {
         },
         callbacks: {
           label: function (context: { parsed: { y: number } }) {
-            return `€${context.parsed.y.toLocaleString()}`;
+            return `€${context.parsed.y.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
           },
         },
       },
@@ -838,11 +856,9 @@ export default function DashboardServizi() {
                       <h3 className="stat-title">{scenario.nome}</h3>
                       <div className="stat-value">
                         €
-                          {totaliScenari[
-                            scenario.id
-                          ]?.mensile.toLocaleString() || "0"}
+                          {formatCurrency(totaliScenari[scenario.id]?.mensile || 0)}
                         /MESE
-                      </div>
+                        </div>
                     </div>
                   </div>
 
@@ -883,7 +899,7 @@ export default function DashboardServizi() {
                               color: scenario.colore,
                             }}
                           >
-                            €{arpuTarget}
+                            €{formatCurrency(arpuTarget)}
                           </div>
                         </div>
                         <div style={{ textAlign: "center" }}>
@@ -904,7 +920,7 @@ export default function DashboardServizi() {
                               color: scenario.colore,
                             }}
                           >
-                            €{costoPerUtente.toFixed(2)}
+                            €{formatCurrency(costoPerUtente)}
                           </div>
                         </div>
                       </div>
@@ -941,7 +957,7 @@ export default function DashboardServizi() {
                                   : "var(--danger-color)",
                           }}
                         >
-                          {efficiencyRatio.toFixed(1)}x
+                          {formatCurrency(efficiencyRatio)}x
                         </div>
                         <div
                           style={{
@@ -962,11 +978,10 @@ export default function DashboardServizi() {
                 <div className="stat-footer">
                   <div className="stat-footer-text">
                     <span className="stat-highlight">
-                      {scenario.utenti.toLocaleString()} utenti
+                        {scenario.utenti.toLocaleString('it-IT')} utenti
                     </span>{" "}
                     • €
-                    {totaliScenari[scenario.id]?.annuale.toLocaleString() ||
-                      "0"}{" "}
+                      {formatCurrency(totaliScenari[scenario.id]?.annuale || 0)}{" "}
                     all'anno
                     {![1000, 10000, 100000].includes(scenario.utenti) && (
                       <button
@@ -1229,7 +1244,7 @@ export default function DashboardServizi() {
                               style={{ cursor: "pointer" }}
                               title="Clicca per modificare"
                             >
-                              {media.weightGB.toFixed(6)} GB
+                              {formatCurrency(media.weightGB, 3)} GB
                               <br />
                               <small
                                 style={{
@@ -1237,39 +1252,36 @@ export default function DashboardServizi() {
                                   color: "var(--gray-600)",
                                 }}
                               >
-                                ({(media.weightGB * 1024).toFixed(2)} MB)
+                                ({formatCurrency(media.weightGB * 1024)} MB)
                               </small>
                             </span>
                           )}
                         </td>
                         <td style={{ textAlign: "center" }}>
                           <span className="cost-badge cost-badge-primary">
-                            €
-                            {calcolaCostoStorage(
+                            €{formatCurrency(calcolaCostoStorage(
                               media.weightGB,
                               media.maxPerCustomer,
                               1000,
-                            ).toFixed(4)}
+                            ))}
                           </span>
                         </td>
                         <td style={{ textAlign: "center" }}>
                           <span className="cost-badge cost-badge-success">
-                            €
-                            {calcolaCostoStorage(
+                            €{formatCurrency(calcolaCostoStorage(
                               media.weightGB,
                               media.maxPerCustomer,
                               10000,
-                            ).toFixed(4)}
+                            ))}
                           </span>
                         </td>
                         <td style={{ textAlign: "center" }}>
                           <span className="cost-badge cost-badge-warning">
-                            €
-                            {calcolaCostoStorage(
+                            €{formatCurrency(calcolaCostoStorage(
                               media.weightGB,
                               media.maxPerCustomer,
                               100000,
-                            ).toFixed(4)}
+                            ))}
                           </span>
                         </td>
                       </tr>
@@ -1279,14 +1291,14 @@ export default function DashboardServizi() {
               </div>
 
               {/* Info Storage */}
-              <div
-                style={{
+                <div
+                  style={{
                   padding: "1rem",
                   backgroundColor: "var(--gray-50)",
-                  borderRadius: "var(--border-radius)",
+                    borderRadius: "var(--border-radius)",
                   marginTop: "0.5rem",
-                }}
-              >
+                  }}
+                >
                   <div
                     style={{
                       display: "flex",
@@ -1305,10 +1317,9 @@ export default function DashboardServizi() {
                       color: "var(--gray-700)",
                   }}
                 >
-                  <strong>Costo storage:</strong> $0.021 per gigabyte al mese
+                  <strong>Costo storage:</strong> $0,021 per gigabyte al mese (Supabase File Storage)
                   <br />
-                  <strong>Formula:</strong> (Weight GB × Max per customer ×
-                  Numero utenti) × $0.021
+                  <strong>Formula:</strong> (Weight GB × Max per customer × Numero Utenti) × $0,021
                 </p>
               </div>
                 </div>
@@ -1339,7 +1350,7 @@ export default function DashboardServizi() {
                 <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "700", color: "var(--gray-900)" }}>
                   Riepilogo Costi Storage per Scenario
                 </h2>
-              </div>
+                  </div>
 
                       <div
                         style={{
@@ -1427,7 +1438,7 @@ export default function DashboardServizi() {
                           }}
                         >
                           <span>📷 Foto Storage:</span>
-                          <strong>€{costoFoto.toFixed(4)}</strong>
+                          <strong>€{formatCurrency(costoFoto)}</strong>
                           </div>
                         <div
                           style={{
@@ -1439,7 +1450,7 @@ export default function DashboardServizi() {
                           }}
                         >
                           <span>🎵 Audio Storage:</span>
-                          <strong>€{costoAudio.toFixed(4)}</strong>
+                          <strong>€{formatCurrency(costoAudio)}</strong>
                         </div>
                         <div
                             style={{
@@ -1451,7 +1462,7 @@ export default function DashboardServizi() {
                           }}
                         >
                           <span>🎬 Video Storage:</span>
-                          <strong>€{costoVideo.toFixed(4)}</strong>
+                          <strong>€{formatCurrency(costoVideo)}</strong>
                         </div>
                           <div
                             style={{
@@ -1463,7 +1474,7 @@ export default function DashboardServizi() {
                           }}
                         >
                           <span>📄 Documenti Storage:</span>
-                          <strong>€{costoDocumenti.toFixed(4)}</strong>
+                          <strong>€{formatCurrency(costoDocumenti)}</strong>
                           </div>
                         <div
                           style={{
@@ -1477,7 +1488,7 @@ export default function DashboardServizi() {
                             color: scenario.colore,
                           }}
                         >
-                          💰 Totale: €{costoTotal.toFixed(4)}
+                          💰 Totale: €{formatCurrency(costoTotal)}
                         </div>
                       </div>
                     </div>
@@ -1513,9 +1524,9 @@ export default function DashboardServizi() {
                     color: "var(--gray-700)",
                   }}
                 >
-                  <strong>Costo storage:</strong> $0.021 per gigabyte al mese
+                  <strong>Costo storage:</strong> $0,021 per gigabyte al mese (Supabase File Storage)
                   <br />
-                  <strong>Formula:</strong> (Weight GB × Max per customer × Numero utenti) × $0.021
+                  <strong>Formula:</strong> (Weight GB × Max per customer × Numero Utenti) × $0,021
                   <br />
                   <strong>Nota:</strong> Tutti i costi storage sono inclusi nei totali delle tabelle sottostanti.
                 </p>
@@ -1685,7 +1696,7 @@ export default function DashboardServizi() {
                                       : "Costo fisso per tutti gli scenari"
                                   }
                                 >
-                                  €{valore.toFixed(2)}
+                                  €{formatCurrency(valore)}
                                 </span>
                               ) : (
                                 <div>
@@ -1756,8 +1767,8 @@ export default function DashboardServizi() {
                                         )
                                       }
                                       title="Clicca per modificare"
-                                >
-                                  €{valore.toLocaleString()}
+                                    >
+                                      €{formatCurrency(valore)}
                                   {servizio.servizio === "AWS EC2" &&
                                     scenario.utenti === 100000 && (
                                       <span
@@ -1841,9 +1852,9 @@ export default function DashboardServizi() {
                                 borderColor: scenario.colore + "40",
                                 cursor: "default",
                               }}
-                              title={`Foto: €${calcolaCostoStorage(mediaTable[0].weightGB, mediaTable[0].maxPerCustomer, scenario.utenti).toFixed(4)} | Audio: €${calcolaCostoStorage(mediaTable[1].weightGB, mediaTable[1].maxPerCustomer, scenario.utenti).toFixed(4)} | Video: €${calcolaCostoStorage(mediaTable[2].weightGB, mediaTable[2].maxPerCustomer, scenario.utenti).toFixed(4)} | Documenti: €${calcolaCostoStorage(mediaTable[3].weightGB, mediaTable[3].maxPerCustomer, scenario.utenti).toFixed(4)}`}
+                              title={`Foto: €${formatCurrency(calcolaCostoStorage(mediaTable[0].weightGB, mediaTable[0].maxPerCustomer, scenario.utenti))} | Audio: €${formatCurrency(calcolaCostoStorage(mediaTable[1].weightGB, mediaTable[1].maxPerCustomer, scenario.utenti))} | Video: €${formatCurrency(calcolaCostoStorage(mediaTable[2].weightGB, mediaTable[2].maxPerCustomer, scenario.utenti))} | Documenti: €${formatCurrency(calcolaCostoStorage(mediaTable[3].weightGB, mediaTable[3].maxPerCustomer, scenario.utenti))}`}
                             >
-                              €{costoStorageMedia.toFixed(4)}
+                              €{formatCurrency(costoStorageMedia)}
                             </span>
                           </td>
                         );
@@ -1878,10 +1889,7 @@ export default function DashboardServizi() {
                                 borderColor: scenario.colore + "40",
                               }}
                             >
-                              €
-                              {totaliScenari[
-                                scenario.id
-                              ]?.mensile.toLocaleString() || "0"}
+                              €{formatCurrency(totaliScenari[scenario.id]?.mensile || 0)}
                             </span>
                           </td>
                         );
@@ -1998,7 +2006,7 @@ export default function DashboardServizi() {
                               marginBottom: "0.25rem",
                             }}
                           >
-                            €{totaleAnnuale.toLocaleString()}
+                            €{formatCurrency(totaleAnnuale)}
                           </div>
                           <div
                             style={{
@@ -2007,7 +2015,7 @@ export default function DashboardServizi() {
                               fontWeight: "500",
                             }}
                           >
-                            €{totaleMensile.toLocaleString()}/mese × 12
+                            €{formatCurrency(totaleMensile)}/mese × 12
                           </div>
                         </div>
 
@@ -2018,7 +2026,7 @@ export default function DashboardServizi() {
                             marginBottom: "0.5rem",
                           }}
                         >
-                          {scenario.utenti.toLocaleString()} utenti
+                          {scenario.utenti.toLocaleString('it-IT')} utenti
                         </div>
 
                         {index > 0 && differenzaPercentuale !== 0 && (
@@ -2107,11 +2115,11 @@ export default function DashboardServizi() {
                         ).nome
                       }{" "}
                       - €
-                      {Math.min(
+                      {formatCurrency(Math.min(
                         ...scenariOrdinati.map(
                           (s) => totaliScenari[s.id]?.annuale || 0,
                         ),
-                      ).toLocaleString()}
+                      ))}
                     </div>
 
                     <div>
@@ -2126,17 +2134,17 @@ export default function DashboardServizi() {
                         ).nome
                       }{" "}
                       - €
-                      {Math.max(
+                      {formatCurrency(Math.max(
                         ...scenariOrdinati.map(
                           (s) => totaliScenari[s.id]?.annuale || 0,
                         ),
-                      ).toLocaleString()}
+                      ))}
                     </div>
 
                     <div>
                       <strong>Differenza massima:</strong>
                       <br />€
-                      {(
+                      {formatCurrency(
                         Math.max(
                           ...scenariOrdinati.map(
                             (s) => totaliScenari[s.id]?.annuale || 0,
@@ -2147,23 +2155,23 @@ export default function DashboardServizi() {
                             (s) => totaliScenari[s.id]?.annuale || 0,
                           ),
                         )
-                      ).toLocaleString()}{" "}
+                      )}{" "}
                       annui
                     </div>
 
                     <div>
                       <strong>Media annuale:</strong>
                       <br />€
-                      {Math.round(
+                      {formatCurrency(Math.round(
                         scenariOrdinati.reduce(
                           (sum, s) => sum + (totaliScenari[s.id]?.annuale || 0),
                           0,
                         ) / scenariOrdinati.length,
-                      ).toLocaleString()}
-                    </div>
+                      ))}
                   </div>
                 </div>
               </div>
+            </div>
 
               {/* Controlli Crossmint - SPOSTATI SOTTO I TOTALI */}
               <div className="crossmint-controls">
@@ -2171,7 +2179,7 @@ export default function DashboardServizi() {
 
                 {/* Warning AWS */}
                 <div
-                  style={{
+                        style={{
                     background: "rgba(245, 158, 11, 0.1)",
                     border: "1px solid rgba(245, 158, 11, 0.3)",
                     borderRadius: "var(--border-radius)",
@@ -2203,7 +2211,7 @@ export default function DashboardServizi() {
                     Considera soluzioni di ottimizzazione come auto-scaling,
                     istanze reserved o architetture serverless.
                   </p>
-                </div>
+            </div>
 
                 <div className="crossmint-inputs">
                   <div className="crossmint-input-group">
@@ -2225,7 +2233,7 @@ export default function DashboardServizi() {
                       max="100"
                       step="1"
                     />
-                  </div>
+                </div>
                   <div className="crossmint-input-group">
                     <label className="crossmint-label">
                       Numero update mensili cv
@@ -2241,13 +2249,13 @@ export default function DashboardServizi() {
                       min="0"
                       step="1"
                     />
-                  </div>
+                    </div>
                   <div className="crossmint-input-group">
                     <label className="crossmint-label">
                       Percentuale Utenti Certificatori (%)
                     </label>
-                    <input
-                      type="number"
+                        <input
+                          type="number"
                       value={percentualeCertificatori}
                       onChange={(e) => {
                         const value = Number(e.target.value);
@@ -2261,229 +2269,207 @@ export default function DashboardServizi() {
                       max="100"
                       step="1"
                     />
-                  </div>
-                  <div className="crossmint-preview">
-                    <div className="crossmint-preview-title">
-                      Anteprima Costi:
-                    </div>
-                    <div className="crossmint-preview-values">
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(3, 1fr)",
-                          gap: "1rem",
-                          marginBottom: "1rem",
-                        }}
-                      >
-                        <div>
-                          <strong
-                            style={{
-                              fontSize: "0.875rem",
-                              color: "var(--gray-700)",
-                            }}
-                          >
-                            Crossmint ({percentualeUtentiAttivi}% attivi):
-                          </strong>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.25rem",
-                              marginTop: "0.5rem",
-                            }}
-                          >
-                            <span style={{ fontSize: "0.8rem" }}>
-                              1K: €{calcolaCostoCrossmint(1000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              10K: €{calcolaCostoCrossmint(10000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              100K: €{calcolaCostoCrossmint(100000).toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                        <div>
-                          <strong
-                            style={{
-                              fontSize: "0.875rem",
-                              color: "var(--gray-700)",
-                            }}
-                          >
-                            Veriff(KYC) ({percentualeCertificatori}%
-                            certificatori):
-                          </strong>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.25rem",
-                              marginTop: "0.5rem",
-                            }}
-                          >
-                            <span style={{ fontSize: "0.8rem" }}>
-                              1K: €{calcolaCostoVeriff(1000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              10K: €{calcolaCostoVeriff(10000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              100K: €{calcolaCostoVeriff(100000).toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                        <div>
-                          <strong
-                            style={{
-                              fontSize: "0.875rem",
-                              color: "var(--gray-700)",
-                            }}
-                          >
-                            Supabase ({percentualeUtentiAttivi}% attivi):
-                          </strong>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.25rem",
-                              marginTop: "0.5rem",
-                            }}
-                          >
-                            <span style={{ fontSize: "0.8rem" }}>
-                              1K: €{calcolaCostoSupabase(1000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              10K: €{calcolaCostoSupabase(10000).toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: "0.8rem" }}>
-                              100K: €{calcolaCostoSupabase(100000).toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  {/* Spiegazione Utenti Attivi */}
+                {/* Anteprima Costi - FULL WIDTH */}
+                <div
+                  style={{
+                    padding: "1.5rem",
+                    backgroundColor: "var(--white)",
+                    borderRadius: "var(--border-radius)",
+                    marginTop: "1.5rem",
+                    border: "2px solid var(--gray-200)",
+                    boxShadow: "var(--shadow-md)",
+                  }}
+                >
                   <div
                     style={{
-                      padding: "1rem",
-                      backgroundColor: "rgba(37, 99, 235, 0.05)",
-                      border: "1px solid rgba(37, 99, 235, 0.2)",
-                      borderRadius: "var(--border-radius)",
-                      marginTop: "1rem",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      marginBottom: "1.5rem",
+                    }}
+                  >
+                    <span style={{ fontSize: "1.5rem" }}>💰</span>
+                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "700", color: "var(--gray-900)" }}>
+                      Anteprima Costi Dinamici
+                    </h3>
+                </div>
+                  
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+                      gap: isMobile ? "1rem" : "1.5rem",
                     }}
                   >
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        marginBottom: "0.75rem",
-                      }}
-                    >
-                      <span style={{ fontSize: "1.2rem" }}>ℹ️</span>
-                      <strong style={{ color: "var(--primary-color)" }}>
-                        Spiegazione Utenti Attivi
-                      </strong>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.875rem",
-                        color: "var(--gray-700)",
-                        lineHeight: "1.5",
-                      }}
-                    >
-                      <p style={{ margin: "0 0 0.5rem 0" }}>
-                        <strong>Formula:</strong> Utenti Attivi = Numero Totale
-                        Utenti × (Percentuale Attivi ÷ 100)
-                      </p>
+                        padding: "1.25rem",
+                        backgroundColor: "var(--gray-50)",
+                          borderRadius: "var(--border-radius)",
+                        border: "2px solid #2563eb20",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          marginBottom: "1rem",
+                          }}
+                        >
+                        <div
+                          style={{
+                            width: "12px",
+                            height: "12px",
+                            backgroundColor: "#2563eb",
+                            borderRadius: "50%",
+                          }}
+                        />
+                        <strong
+                          style={{
+                            fontSize: "1rem",
+                            color: "var(--gray-900)",
+                          }}
+                        >
+                          Crossmint ({percentualeUtentiAttivi}% attivi)
+                        </strong>
+                        </div>
                       <div
                         style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fit, minmax(200px, 1fr))",
-                          gap: "1rem",
-                          marginTop: "0.75rem",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.5rem",
                         }}
                       >
-                        <div
-                          style={{
-                            padding: "0.75rem",
-                            backgroundColor: "white",
-                            borderRadius: "var(--border-radius-sm)",
-                            border: "1px solid var(--gray-200)",
-                          }}
-                        >
-                          <strong>
-                            1K Utenti ({percentualeUtentiAttivi}% attivi):
-                          </strong>
-                          <br />
-                          1,000 × ({percentualeUtentiAttivi} ÷ 100) ={" "}
-                          <strong>
-                            {Math.round(
-                              (1000 * percentualeUtentiAttivi) / 100,
-                            ).toLocaleString()}
-                          </strong>{" "}
-                          utenti attivi
-                        </div>
-                        <div
-                          style={{
-                            padding: "0.75rem",
-                            backgroundColor: "white",
-                            borderRadius: "var(--border-radius-sm)",
-                            border: "1px solid var(--gray-200)",
-                          }}
-                        >
-                          <strong>
-                            10K Utenti ({percentualeUtentiAttivi}% attivi):
-                          </strong>
-                          <br />
-                          10,000 × ({percentualeUtentiAttivi} ÷ 100) ={" "}
-                          <strong>
-                            {Math.round(
-                              (10000 * percentualeUtentiAttivi) / 100,
-                            ).toLocaleString()}
-                          </strong>{" "}
-                          utenti attivi
-                        </div>
-                        <div
-                          style={{
-                            padding: "0.75rem",
-                            backgroundColor: "white",
-                            borderRadius: "var(--border-radius-sm)",
-                            border: "1px solid var(--gray-200)",
-                          }}
-                        >
-                          <strong>
-                            100K Utenti ({percentualeUtentiAttivi}% attivi):
-                          </strong>
-                          <br />
-                          100,000 × ({percentualeUtentiAttivi} ÷ 100) ={" "}
-                          <strong>
-                            {Math.round(
-                              (100000 * percentualeUtentiAttivi) / 100,
-                            ).toLocaleString()}
-                          </strong>{" "}
-                          utenti attivi
-                        </div>
-                      </div>
-                      <p
-                        style={{
-                          margin: "0.75rem 0 0 0",
-                          fontSize: "0.8rem",
-                          color: "var(--gray-600)",
-                        }}
-                      >
-                        Questi utenti attivi vengono utilizzati per calcolare i
-                        costi di Crossmint e Supabase che dipendono
-                        dall'utilizzo effettivo.
-                      </p>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>1K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#2563eb" }}>€{formatCurrency(calcolaCostoCrossmint(1000))}</strong>
+                          </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>10K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#2563eb" }}>€{formatCurrency(calcolaCostoCrossmint(10000))}</strong>
                     </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>100K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#2563eb" }}>€{formatCurrency(calcolaCostoCrossmint(100000))}</strong>
                   </div>
                 </div>
               </div>
-            </div>
+                    <div
+                      style={{
+                        padding: "1.25rem",
+                        backgroundColor: "var(--gray-50)",
+                        borderRadius: "var(--border-radius)",
+                        border: "2px solid #059669 20",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginBottom: "1rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "12px",
+                            height: "12px",
+                            backgroundColor: "#059669",
+                            borderRadius: "50%",
+                          }}
+                        />
+                        <strong
+                          style={{
+                            fontSize: "1rem",
+                            color: "var(--gray-900)",
+                          }}
+                        >
+                          Veriff(KYC) ({percentualeCertificatori}% certificatori)
+                              </strong>
+                            </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>1K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#059669" }}>€{formatCurrency(calcolaCostoVeriff(1000))}</strong>
+                            </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>10K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#059669" }}>€{formatCurrency(calcolaCostoVeriff(10000))}</strong>
+                            </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>100K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#059669" }}>€{formatCurrency(calcolaCostoVeriff(100000))}</strong>
+                          </div>
+                        </div>
+                      </div>
+                    <div
+                                style={{
+                        padding: "1.25rem",
+                        backgroundColor: "var(--gray-50)",
+                        borderRadius: "var(--border-radius)",
+                        border: "2px solid #d9770620",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginBottom: "1rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "12px",
+                            height: "12px",
+                            backgroundColor: "#d97706",
+                            borderRadius: "50%",
+                          }}
+                        />
+                              <strong
+                                style={{
+                            fontSize: "1rem",
+                            color: "var(--gray-900)",
+                          }}
+                        >
+                          Supabase ({percentualeUtentiAttivi}% attivi)
+                              </strong>
+                            </div>
+                              <div
+                                style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>1K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#d97706" }}>€{formatCurrency(calcolaCostoSupabase(1000))}</strong>
+                              </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>10K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#d97706" }}>€{formatCurrency(calcolaCostoSupabase(10000))}</strong>
+                            </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem", backgroundColor: "white", borderRadius: "var(--border-radius-sm)" }}>
+                          <span style={{ fontSize: "0.9rem", color: "var(--gray-600)" }}>100K utenti:</span>
+                          <strong style={{ fontSize: "1rem", color: "#d97706" }}>€{formatCurrency(calcolaCostoSupabase(100000))}</strong>
+                          </div>
+                        </div>
+                  </div>
+                </div>
+              </div>
+                </div>
+                        </div>
 
             {/* Grafici Dinamici */}
             <div className="charts-section">
@@ -2497,12 +2483,9 @@ export default function DashboardServizi() {
                     <div>
                       <h3 className="chart-title">{scenario.nome}</h3>
                       <p className="chart-subtitle">
-                        €
-                        {totaliScenari[scenario.id]?.mensile.toLocaleString() ||
-                          "0"}
-                        /mese
+                        €{formatCurrency(totaliScenari[scenario.id]?.mensile || 0)}/mese
                       </p>
-                    </div>
+                        </div>
                     {![1000, 10000, 100000].includes(scenario.utenti) && (
                       <button
                         onClick={() => removeScenario(scenario.id)}
@@ -2518,416 +2501,19 @@ export default function DashboardServizi() {
                         <Trash2 size={16} />
                       </button>
                     )}
-                  </div>
+                      </div>
                   <div className="chart-body">
                     <Bar
                       data={getChartDataForScenario(scenario)}
                       options={chartOptions}
                     />
-                  </div>
-                </div>
+                    </div>
+                      </div>
               ))}
-            </div>
-          </div>
-
-          {/* Business Planning Strategy Section */}
-          <div className="business-strategy-section">
-            <div className="strategy-header">
-              <div className="strategy-icon">
-                <TrendingUp size={24} />
-              </div>
-              <div>
-                <h2 className="strategy-title">
-                  🎯 Strategia Business Planning
-                </h2>
-                <p className="strategy-subtitle">
-                  Piano strategico basato sui tuoi scenari di costo
-                </p>
               </div>
             </div>
 
-            {/* Fasi della Strategia */}
-            <div className="strategy-phases">
-              {/* Fase 1: Analisi Scenari */}
-              <div className="strategy-phase">
-                <div className="phase-header">
-                  <div className="phase-number">1</div>
-                  <h3 className="phase-title">
-                    📈 Analisi Scenari di Crescita
-                  </h3>
-                </div>
-                <div className="phase-content">
-                  <div className="phase-grid">
-                    <div className="phase-card">
-                      <h4>🎯 Scenari Strategici Raccomandati</h4>
-                      <ul>
-                        <li>
-                          <strong>MVP Launch:</strong> 500-1K utenti
-                        </li>
-                        <li>
-                          <strong>Product-Market Fit:</strong> 5K-10K utenti
-                        </li>
-                        <li>
-                          <strong>Scale-Up:</strong> 50K utenti
-                        </li>
-                        <li>
-                          <strong>Market Leader:</strong> 100K+ utenti
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="phase-card">
-                      <h4>💰 Break-Even Analysis</h4>
-                      <div className="metric-row">
-                        <span>ARPU Target:</span>
-                        <span className="metric-value">€50 (fisso)</span>
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "0.875rem",
-                          color: "var(--gray-600)",
-                          marginTop: "0.5rem",
-                        }}
-                      >
-                        I valori ARPU e CPU sono ora visualizzati direttamente
-                        nelle schede degli scenari sopra.
-                          </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fase 2: Ottimizzazione Costi */}
-              <div className="strategy-phase">
-                <div className="phase-header">
-                  <div className="phase-number">2</div>
-                  <h3 className="phase-title">💰 Ottimizzazione Costi</h3>
-                </div>
-                <div className="phase-content">
-                  <div className="phase-grid">
-                    <div className="phase-card">
-                      <h4>🔴 Priorità Alta - Servizi Costosi</h4>
-                      {serviziRicorrenti
-                        .filter((s) => s.costo100000 > 50)
-                        .sort((a, b) => b.costo100000 - a.costo100000)
-                        .slice(0, 3)
-                        .map((servizio) => (
-                          <div key={servizio.id} className="priority-item high">
-                            <strong>{servizio.servizio}</strong>
-                            <span>€{servizio.costo100000}/mese</span>
-                            <small>Negozia contratti volume</small>
-                          </div>
-                        ))}
-
-                      {/* Warning specifico per AWS */}
-                      <div
-                        style={{
-                          background: "rgba(245, 158, 11, 0.1)",
-                          border: "1px solid rgba(245, 158, 11, 0.3)",
-                          borderRadius: "var(--border-radius)",
-                          padding: "0.75rem",
-                          marginTop: "1rem",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                            fontSize: "0.8rem",
-                            color: "var(--warning-color)",
-                            fontWeight: "600",
-                            marginBottom: "0.25rem",
-                          }}
-                        >
-                          ⚠️ AWS EC2 - Scalabilità Critica
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "0.75rem",
-                            color: "var(--gray-700)",
-                          }}
-                        >
-                          Crescita: +100% (€15→€30) per 100K utenti
-                          <br />
-                          <strong>Azioni:</strong> Auto-scaling, Reserved
-                          Instances, Container optimization
-                        </div>
-                      </div>
-                    </div>
-                    <div className="phase-card">
-                      <h4>🟡 Priorità Media - Crescita Variabile</h4>
-                      {serviziRicorrenti
-                        .filter((s) => {
-                          const crescita = s.costo100000 / (s.costo1000 || 1);
-                          return crescita > 1.5 && crescita < 3;
-                        })
-                        .slice(0, 3)
-                        .map((servizio) => (
-                          <div
-                            key={servizio.id}
-                            className="priority-item medium"
-                          >
-                            <strong>{servizio.servizio}</strong>
-                            <span>
-                              Crescita:{" "}
-                              {(
-                                (servizio.costo100000 /
-                                  (servizio.costo1000 || 1)) *
-                                100
-                              ).toFixed(0)}
-                              %
-                            </span>
-                            <small>Ottimizza utilizzo</small>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fase 3: Financial Planning */}
-              <div className="strategy-phase">
-                <div className="phase-header">
-                  <div className="phase-number">3</div>
-                  <h3 className="phase-title">📊 Financial Planning</h3>
-                </div>
-                <div className="phase-content">
-                  <div className="financial-timeline">
-                    {scenariOrdinati.map((scenario, index) => (
-                      <div key={scenario.id} className="timeline-item">
-                        <div
-                          className="timeline-marker"
-                          style={{ backgroundColor: scenario.colore }}
-                        ></div>
-                        <div className="timeline-content">
-                          <h4>
-                            Anno {index + 1}: {scenario.nome}
-                          </h4>
-                          <div className="timeline-metrics">
-                            <div className="timeline-metric">
-                              <span>Budget IT:</span>
-                              <strong>
-                                €
-                                {totaliScenari[
-                                  scenario.id
-                                ]?.annuale.toLocaleString()}
-                              </strong>
-                            </div>
-                            <div className="timeline-metric">
-                              <span>Buffer (+30%):</span>
-                              <strong>
-                                €
-                                {Math.round(
-                                  (totaliScenari[scenario.id]?.annuale || 0) *
-                                    1.3,
-                                ).toLocaleString()}
-                              </strong>
-                            </div>
-                            <div className="timeline-metric">
-                              <span>Investimenti:</span>
-                              <strong>
-                                €
-                                {Math.round(
-                                  (totaliScenari[scenario.id]?.annuale || 0) *
-                                    0.2,
-                                ).toLocaleString()}
-                              </strong>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Fase 4: Risk Management */}
-              <div className="strategy-phase">
-                <div className="phase-header">
-                  <div className="phase-number">4</div>
-                  <h3 className="phase-title">⚠️ Risk Management</h3>
-                </div>
-                <div className="phase-content">
-                  <div className="risk-matrix">
-                    <div className="risk-card high-risk">
-                      <h4>🔴 Alto Rischio</h4>
-                      <p>
-                        <strong>Crescita Accelerata (+200%)</strong>
-                      </p>
-                      <p>
-                        Budget necessario: €
-                        {Math.round(
-                          (totaliScenari[
-                            scenariOrdinati[scenariOrdinati.length - 1]?.id
-                          ]?.annuale || 0) * 2,
-                        ).toLocaleString()}
-                      </p>
-                      <small>Prepara contratti scalabili</small>
-                    </div>
-                    <div className="risk-card medium-risk">
-                      <h4>🟡 Medio Rischio</h4>
-                      <p>
-                        <strong>Stagnazione Crescita</strong>
-                      </p>
-                      <p>Ottimizzazione: -30% costi</p>
-                      <small>Rivedi servizi non essenziali</small>
-                    </div>
-                    <div className="risk-card low-risk">
-                      <h4>🟢 Basso Rischio</h4>
-                      <p>
-                        <strong>Crescita Lineare</strong>
-                      </p>
-                      <p>Scenario attuale mantieni</p>
-                      <small>Monitoraggio standard</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fase 5: KPI Dashboard */}
-              <div className="strategy-phase">
-                <div className="phase-header">
-                  <div className="phase-number">5</div>
-                  <h3 className="phase-title">📋 KPI Dashboard</h3>
-                </div>
-                <div className="phase-content">
-                  <div className="kpi-grid">
-                    <div
-                                style={{
-                        gridColumn: "1 / -1",
-                        textAlign: "center",
-                        padding: "1rem",
-                        backgroundColor: "var(--gray-50)",
-                        borderRadius: "var(--border-radius)",
-                        border: "1px solid var(--gray-200)",
-                      }}
-                    >
-                      <div
-                                style={{
-                          fontSize: "1rem",
-                          fontWeight: "600",
-                          color: "var(--gray-700)",
-                          marginBottom: "0.5rem",
-                        }}
-                      >
-                        📊 KPI Dashboard
-                            </div>
-                              <div
-                                style={{
-                          fontSize: "0.875rem",
-                          color: "var(--gray-600)",
-                        }}
-                      >
-                        I valori ARPU, CPU ed Efficiency Ratio sono ora
-                        visualizzati direttamente nelle schede degli scenari
-                        principali sopra.
-                        <br />
-                        Ogni scheda mostra: ARPU Target (€50), Cost Per User
-                        (CPU) e l'Efficiency Ratio calcolato automaticamente.
-                              </div>
-                            </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fase 6: Action Plan */}
-              <div className="strategy-phase">
-                <div className="phase-header">
-                  <div className="phase-number">6</div>
-                  <h3 className="phase-title">🚀 Action Plan</h3>
-                </div>
-                <div className="phase-content">
-                  <div className="action-timeline">
-                    <div className="action-item">
-                      <div className="action-period">Settimana 1-2</div>
-                      <div className="action-tasks">
-                        <div className="action-task">
-                          ✅ Setup scenari nel calculator
-                        </div>
-                        <div className="action-task">
-                          📊 Ricerca benchmark industry
-                        </div>
-                        <div className="action-task">💰 Define ARPU target</div>
-                      </div>
-                    </div>
-                    <div className="action-item">
-                      <div className="action-period">Settimana 3-4</div>
-                      <div className="action-tasks">
-                        <div className="action-task">🔍 Analisi gap costi</div>
-                        <div className="action-task">🤝 Vendor negotiation</div>
-                        <div className="action-task">⚠️ Risk assessment</div>
-                      </div>
-                    </div>
-                    <div className="action-item">
-                      <div className="action-period">Mese 2</div>
-                      <div className="action-tasks">
-                        <div className="action-task">✅ Budget approval</div>
-                        <div className="action-task">
-                          📈 KPI dashboard setup
-                        </div>
-                        <div className="action-task">
-                          🔄 Monthly review processo
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Decision Framework */}
-            <div className="decision-framework">
-              <h3>🎯 Decision Framework</h3>
-              <div className="decision-grid">
-                <div className="decision-card go">
-                  <h4>✅ GO Criteria</h4>
-                  <ul>
-                    <li>Cost per User &lt; 30% ARPU</li>
-                    <li>Break-even &lt; 12 mesi</li>
-                    <li>Budget variance &lt; 20%</li>
-                  </ul>
-                </div>
-                <div className="decision-card no-go">
-                  <h4>❌ NO-GO Criteria</h4>
-                  <ul>
-                    <li>Costi crescono &gt;2x vs utenti</li>
-                    <li>ROI negativo &gt;18 mesi</li>
-                    <li>Dipendenza critica 1 vendor</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Info Section */}
-          <div className="info-section">
-            <div className="info-header">
-              <div className="info-icon">
-                <Settings size={20} />
-              </div>
-              <h3 className="info-title">Gestione Scenari Personalizzati</h3>
-            </div>
-            <div className="info-content">
-              <div className="info-item">
-                <strong>Scenari attivi:</strong> {scenariCustom.length}
-              </div>
-              <div className="info-item">
-                <strong>Scenari custom:</strong>{" "}
-                {
-                  scenariCustom.filter(
-                    (s) => ![1000, 10000, 100000].includes(s.utenti),
-                  ).length
-                }
-              </div>
-              <div className="info-item">
-                <strong>Servizi monitorati:</strong> {serviziRicorrenti.length}
-              </div>
-              <div className="info-item">
-                <strong>Tip:</strong> Usa la strategia sopra per ottimizzare i
-                costi
-              </div>
-            </div>
-          </div>
+        
 
           {/* Footer */}
           <div className="footer">

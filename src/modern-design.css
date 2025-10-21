@@ -2330,3 +2330,302 @@ body {
     margin-bottom: 0.5rem;
   }
 }
+
+/* ============================================ */
+/* RESPONSIVE DESIGN - TABLET E MOBILE */
+/* ============================================ */
+
+/* Tablet (iPad) - 768px to 1024px */
+@media (max-width: 1024px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table {
+    min-width: 800px;
+  }
+}
+
+/* Mobile - fino a 768px */
+@media (max-width: 768px) {
+  .header-title {
+    font-size: 1.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-title {
+    font-size: 0.875rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .table-title {
+    font-size: 1.25rem;
+  }
+
+  .table-description {
+    font-size: 0.875rem;
+  }
+
+  .data-table {
+    font-size: 0.875rem;
+    min-width: 700px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem;
+  }
+
+  .cost-badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .chart-card {
+    padding: 1rem;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+
+  .modal-content {
+    margin: 1rem;
+    padding: 1.5rem;
+    max-width: calc(100% - 2rem);
+  }
+
+  .form-input {
+    font-size: 0.875rem;
+  }
+
+  /* Anteprima Costi Responsive */
+  .crossmint-controls > div[style*="gridTemplateColumns: repeat(3, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile Small - fino a 480px */
+@media (max-width: 480px) {
+  .header-content {
+    padding: 1rem;
+  }
+
+  .header-title {
+    font-size: 1.25rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .btn {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .btn-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .stat-value {
+    font-size: 1.125rem;
+  }
+
+  .stat-highlight {
+    font-size: 0.75rem;
+  }
+
+  .content {
+    padding: 0.75rem;
+  }
+
+  .table-container {
+    margin: 0 -0.75rem;
+    padding: 0 0.75rem;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+    min-width: 600px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.375rem;
+  }
+
+  .cost-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .chart-body {
+    height: 200px;
+  }
+
+  .form-input {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .modal-content {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.125rem;
+  }
+
+  /* Stack layout per elementi che normalmente sono affiancati */
+  .phase-grid,
+  .decision-grid,
+  .risk-matrix {
+    grid-template-columns: 1fr !important;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Utility classes per responsive */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile {
+    display: none !important;
+  }
+}
+
+/* Miglioramenti per touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .cost-badge,
+  .edit-btn,
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .form-input,
+  input,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Previene zoom automatico su iOS */
+  }
+}
+
+/* Responsive Grid per Riepilogo Storage */
+@media (max-width: 768px) {
+  [style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  [style*="gridTemplateColumns: repeat(3, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  [style*="gridTemplateColumns: repeat(2, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  [style*="gridTemplateColumns: repeat(3, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Overflow scroll per tabelle su mobile */
+@media (max-width: 768px) {
+  .table-section {
+    overflow-x: auto;
+  }
+
+  /* Riduci padding su mobile per sezioni con inline styles */
+  [style*="padding: 1.5rem"] {
+    padding: 1rem !important;
+  }
+
+  [style*="padding: 1.25rem"] {
+    padding: 1rem !important;
+  }
+
+  /* Font sizes responsive */
+  [style*="fontSize: 1.75rem"] {
+    font-size: 1.5rem !important;
+  }
+
+  [style*="fontSize: 1.5rem"] {
+    font-size: 1.25rem !important;
+  }
+
+  [style*="fontSize: 1.25rem"] {
+    font-size: 1.125rem !important;
+  }
+}
