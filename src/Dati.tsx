@@ -18,6 +18,7 @@ import {
   DollarSign,
   Users,
   PlusCircle,
+  Info,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import "./modern-design.css";
@@ -125,7 +126,7 @@ const SERVIZI_RICORRENTI: ServizioRow[] = [
   },
   {
     id: crypto.randomUUID(),
-    servizio: "Stripe (3,5% fisso)",
+    servizio: "Stripe (0,25 € + 1.5-3% per transazione)",
     costo1000: 0,
     costo10000: 0,
     costo100000: 0,
@@ -1559,18 +1560,53 @@ export default function DashboardServizi() {
                                 </button>
                               </div>
                             ) : (
-                              <strong
-                                onClick={() =>
-                                  startEditing(
-                                    `${servizio.id}-servizio`,
-                                    servizio.servizio,
-                                  )
-                                }
-                                style={{ cursor: "pointer" }}
-                                title="Clicca per modificare"
-                              >
-                                {servizio.servizio}
-                              </strong>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                {servizio.servizio.includes("Stripe") ? (
+                                  <>
+                                    <a
+                                      href="https://stripe.com/it/pricing"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="stripe-link"
+                                    >
+                                      {servizio.servizio}
+                                    </a>
+                                    <div className="stripe-info-tooltip">
+                                      <Info 
+                                        size={16} 
+                                        style={{ 
+                                          color: "var(--primary-color)",
+                                          opacity: 0.7,
+                                        }} 
+                                      />
+                                      <div className="tooltip-content">
+                                        <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
+                                          Standard: 0,25 € + 1,5%
+                                        </div>
+                                        <div style={{ fontSize: "0.75rem", opacity: 0.9 }}>
+                                          <div style={{ fontWeight: "600", marginBottom: "0.25rem" }}>Extra (opzionali):</div>
+                                          <div>• Billing (+0,7%)</div>
+                                          <div>• Invoicing (+0,4%)</div>
+                                          <div>• Tax (+0,5%)</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <strong
+                                    onClick={() =>
+                                      startEditing(
+                                        `${servizio.id}-servizio`,
+                                        servizio.servizio,
+                                      )
+                                    }
+                                    style={{ cursor: "pointer" }}
+                                    title="Clicca per modificare"
+                                  >
+                                    {servizio.servizio}
+                                  </strong>
+                                )}
+                              </div>
                             )}
                           </div>
                         </td>
